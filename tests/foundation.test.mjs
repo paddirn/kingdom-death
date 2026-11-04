@@ -5,7 +5,25 @@ import Handlebars from "handlebars";
 // Structural test double only: not a Foundry implementation or validation test.
 class Field { constructor(options = {}) { this.options = options; } }
 class Schema extends Field { constructor(fields) { super(); this.fields = fields; } }
-class TypeDataModel {}
+class TypeDataModel {
+  constructor(data = {}) { Object.assign(this, defaults(this.constructor.defineSchema()), data); }
+  validate() {
+    // Offline contract check only, not Foundry's validation implementation.
+    const visit = (schema, data) => {
+      for (const [key,field] of Object.entries(schema)) {
+        const value = data[key];
+        if (field instanceof Schema) visit(field.fields,value);
+        else {
+          const o = field.options;
+          if (o.choices && value === "" && o.blank !== true) throw new Error(`${key}: blank choice requires explicit blank permission`);
+          if (o.choices && !o.choices.includes(value)) throw new Error(`${key}: invalid choice`);
+          if (typeof value === "number" && (o.min !== undefined && value < o.min)) throw new Error(`${key}: below minimum`);
+        }
+      }
+    };
+    visit(this.constructor.defineSchema(),this); return true;
+  }
+}
 class Sheet {
   _processFormData(event, form, formData) { return formData.object; }
   async _prepareContext() { return {}; }
@@ -144,4 +162,17 @@ test("successful Save clears draft; failure retains it for correction", async ()
   const data={system:{notes:"draft",cannotUseFightingArts:true,impairments:"injury",rerollUsed:false}};
   await sheet._processSubmitData(null,null,data);
   assert.deepEqual(sheet.saved,data);assert.equal(sheet._draft.size,0);
+});
+
+test("new Survivor constructs with default values and passes offline validation contract", () => {
+  const survivor = new SurvivorData();
+  assert.equal(survivor.sex, "");
+  assert.equal(survivor.validate(), true);
+  const schema = SurvivorData.defineSchema();
+  assert.deepEqual(schema.sex.options.choices, ["", "M", "F"]);
+  for (const value of ["", "M", "F"]) assert.equal(new SurvivorData({sex:value}).validate(),true);
+  assert.throws(() => new SurvivorData({sex:"invalid"}).validate(), /invalid choice/);
+  for (const field of [schema.sex,schema.impairments,schema.oncePerLifetime,schema.weaponProficiency.fields.type]) {
+    assert.equal(field.options.initial, ""); assert.equal(field.options.blank,true);
+  }
 });
