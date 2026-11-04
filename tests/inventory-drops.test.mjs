@@ -80,13 +80,23 @@ test('drag feedback has no child flicker and clears on leave, cancellation and t
   const classes=new Set(),child={};const target={dataset:{kdmDrop:'gear'},classList:{add:c=>classes.add(c),remove:c=>classes.delete(c)},contains:node=>node===child};
   const element={...surface('root'),ownerDocument:doc};const sheet={element,isEditable:true};
   globalThis.game={user:{}};globalThis.foundry={applications:{ux:{TextEditor:{getDragEventData:()=>({type:'Item',uuid:'Item.a'})}}},documents:{Item:{implementation:{fromDropData:async()=>({documentName:'Item',type:'gear',testUserPermission:()=>true})}}}};
-  installDropFeedback(sheet);await listeners.doc.dragstart({});
+  installDropFeedback(sheet);
+  const start=async()=>{let observer;const event={composedPath:()=>[{addEventListener:(type,fn)=>observer=fn}]};listeners.window.dragstart(event);observer(event);await Promise.resolve();await Promise.resolve();};
+  await start();
   const event={target:{closest:()=>target},preventDefault(){},dataTransfer:{}};
   listeners.root.dragover(event);assert.equal(classes.has('kdm-drop-valid'),true);
   listeners.root.dragleave({relatedTarget:child});assert.equal(classes.has('kdm-drop-valid'),true);
   listeners.root.dragleave({relatedTarget:null});assert.equal(classes.size,0);
   listeners.root.dragover(event);listeners.doc.keydown({key:'Escape'});assert.equal(classes.size,0);
-  await listeners.doc.dragstart({});listeners.root.dragover(event);listeners.doc.drop({});assert.equal(classes.size,0);
-  sheet.isEditable=false;await listeners.doc.dragstart({});listeners.root.dragover(event);assert.equal(classes.size,0);assert.equal(event.dataTransfer.dropEffect,'none');
+  await start();listeners.root.dragover(event);listeners.doc.drop({});assert.equal(classes.size,0);
+  sheet.isEditable=false;await start();listeners.root.dragover(event);assert.equal(classes.size,0);assert.equal(event.dataTransfer.dropEffect,'none');
   const previous=sheet._dropFeedback;installDropFeedback(sheet);assert.equal(previous.signal.aborted,true);
+});
+test('unobserved external dragstart does not veto a drop or claim a valid target',()=>{
+  const listeners={};const doc={addEventListener(){},defaultView:{AbortController,addEventListener(){}}};
+  const sheet={isEditable:true,element:{ownerDocument:doc,addEventListener:(type,fn)=>listeners[type]=fn}};
+  installDropFeedback(sheet);
+  let highlighted=false;const target={dataset:{kdmDrop:'gear'},classList:{add:()=>highlighted=true,remove(){}}};
+  const event={target:{closest:()=>target},preventDefault(){},dataTransfer:{dropEffect:'none'}};
+  listeners.dragover(event);assert.equal(event.dataTransfer.dropEffect,'copy');assert.equal(highlighted,false);
 });

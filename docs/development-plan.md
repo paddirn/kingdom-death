@@ -25,3 +25,7 @@ Authorized monster/equipment packs, expansions, import/export mappings, migratio
 ## Working process
 
 Keep each milestone on a dedicated branch/PR. Add tests for pure rules and permission/update boundaries. Preserve working behavior; refactor shared services as new phases emerge. No merges, releases, or compatibility-verification claims without corresponding review/runtime evidence. Update docs whenever data/UI behavior changes.
+
+## Current Survivor repair / glossary acceptance gate
+
+Implemented offline: native drop controller integration and non-vetoing feedback; persistent header Save; 10+6 XP and readable totals; Survival bounds; GM-only incremental JSON glossary import. Automated contract tests must pass along with existing inventory/family tests and release-package validation. Release acceptance additionally requires the exact [Survivor runtime checklist](survivor-drag-drop.md) and [glossary checklist](living-glossary.md) in Forge on 14.365. These runtime checks are pending, not implied by mocked test success. Live glossary retrieval is deferred pending source permission and a tested supported access mechanism.

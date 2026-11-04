@@ -171,3 +171,15 @@
 }
 @container (max-width:420px) { .kdm-survivor .kdm-inventory-cards { grid-template-columns:1fr; } }
 @media (hover:none) { .kdm-survivor .kdm-clear-gear { opacity:1; } }
+/* The shared header/tab wrapper stays visible without fragile fixed sticky offsets. */
+.kdm-survivor .kdm-sheet-top { position:sticky; top:0; z-index:3; background:var(--kdm-bg); }
+.kdm-survivor .kdm-sheet-top .kdm-survivor-header, .kdm-survivor .kdm-sheet-top .kdm-tabs { position:static; }
+.kdm-survivor .kdm-survivor-header { display:grid; grid-template-columns:minmax(0,1fr) 140px auto; align-items:start; }
+.kdm-survivor .kdm-header-save { margin-top:25px; height:40px; white-space:nowrap; }
+.kdm-survivor .kdm-hunt-xp .kdm-track-boxes { display:grid; grid-template-columns:repeat(10,18px); gap:5px; flex:none; }
+.kdm-survivor .kdm-track > label input.kdm-number-display { width:56px; min-width:56px; height:42px; padding:4px 6px; text-align:center; font-size:22px; box-sizing:border-box; }
+@container (max-width:650px) {
+  .kdm-survivor .kdm-survivor-header { grid-template-columns:1fr auto; }
+  .kdm-survivor .kdm-survivor-header > label:first-child { grid-column:1 / -1; }
+  .kdm-survivor .kdm-header-sex { max-width:160px; }
+}

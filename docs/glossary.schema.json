@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Kingdom Death normalized glossary import",
+  "type": "object", "additionalProperties": false, "required": ["schemaVersion", "source", "entries"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "source": {"type": "object", "additionalProperties": false, "required": ["id", "url"], "properties": {"id": {"$ref": "#/$defs/id"}, "url": {"$ref": "#/$defs/url"}}},
+    "entries": {"type": "array", "maxItems": 10000, "items": {
+      "type": "object", "additionalProperties": false, "required": ["id", "title", "description"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 500, "pattern": "\\S"},
+        "description": {"type": "string", "minLength": 1, "maxLength": 200000, "pattern": "\\S"},
+        "updatedAt": {"type": "string", "maxLength": 100},
+        "sourceUrl": {"$ref": "#/$defs/url"}
+      }
+    }}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 200, "pattern": "\\S"},
+    "url": {"type": "string", "format": "uri", "pattern": "^https://", "maxLength": 2048}
+  },
+  "$comment": "Runtime additionally trims strings, rejects URL credentials and enforces unique entry IDs. Import file maximum is 5 MiB."
+}

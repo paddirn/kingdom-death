@@ -1,6 +1,19 @@
+import { clampSurvival, validateSurvival } from "../rules/survival.mjs";
 import { ATTRIBUTES, LOCATIONS, SLOTS } from "../rules/constants.mjs";
 import { fields, common, schema, count, number, bool, slots, text } from "./fields.mjs";
 export class SurvivorData extends foundry.abstract.TypeDataModel {
+  static _cleanData(data, options, state) {
+    super._cleanData(data, options, state);
+    // Never fill missing keys on a partial update: the merged source is cleaned again.
+    if (data.survival?.value !== undefined && data.survival?.limit !== undefined) {
+      Object.assign(data.survival, clampSurvival(data.survival));
+    }
+    return data;
+  }
+  static validateJoint(data) {
+    super.validateJoint(data);
+    if (data.survival) validateSurvival(data.survival);
+  }
   static defineSchema() {
     return {...common(),
       proficiencyUuid: text({blank: true}),

@@ -1,0 +1,15 @@
+<section class="kdm-glossary-manager">
+  <p>Import an authorized, normalized JSON file into the world's <strong>Living Glossary</strong> Journal. Existing managed pages are refreshed by stable source ID; manual pages are preserved.</p>
+  <p>Website retrieval is not enabled. <a href="https://kingdomdeath.com/rules/living-glossary" target="_blank" rel="noopener noreferrer">Official Living Glossary</a></p>
+  <p>Import only content you are authorized to copy. Changes to managed page text will be replaced on refresh. Use separate manual pages for your notes.</p>
+  {{#if permissionError}}<p role="alert">{{permissionError}}</p>{{/if}}
+  <label>Normalized JSON (maximum 5 MiB)<input type="file" accept=".json,application/json" {{#unless canSync}}disabled{{/unless}}></label>
+  <button type="submit" {{#unless canSync}}disabled{{/unless}}>{{#if busy}}Syncing…{{else}}Sync Now{{/if}}</button>
+  {{#if report}}
+  <section aria-live="polite"><h3>Last session report</h3><p>{{report.syncedAt}}</p>
+    <p>Created: {{report.created}} · Updated: {{report.updated}} · Unchanged: {{report.unchanged}} · Skipped: {{report.skipped}}</p>
+    {{#if report.errors}}<ul>{{#each report.errors}}<li>{{this}}</li>{{/each}}</ul>{{/if}}
+    {{#if report.journalId}}<button type="button" data-action="openJournal">Open Living Glossary</button>{{/if}}
+  </section>
+  {{/if}}
+</section>

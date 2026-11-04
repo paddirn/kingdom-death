@@ -38,3 +38,11 @@ Consulted November 3, 2026. Published API documentation is evidence for conventi
 - Inventory writes are queued per Actor on a client. Existing owned Items move; outside Items copy once. Replacement/clearing never deletes displaced Items. Failed assignment preserves the copy in Inventory for recovery.
 - Grid mutations save immediately and are omitted from whole-form submission. Proficiency remains a Save Changes draft; existing UUID and legacy text paths are retained.
 - CSS subgrid aligns top modules without fixed section heights. No runtime or visual verification is implied by template/CSS tests.
+
+## Survivor native drops, Survival bounds and glossary import
+
+Use ActorSheetV2's cached DragDrop controller and native V14 resolution rather than a parallel DOM drop handler or V1 `dragDrop` option. Cosmetic feedback must not veto unresolved external drags. Keep immediate embedded/grid updates independent of form drafts. Header Save remains the single existing submit action.
+
+Survival uses a pure clamping function, live controls, submission normalization and TypeDataModel cleaning/joint validation. Complete pairs are normalized; partial updates never fill absent fields with defaults. This preserves all saved data paths and confines the invariant to Survival.
+
+Use native Journal/JournalEntryPage documents for glossary data, with source namespace and stable entry ID flags rather than mutable titles. JSON import is retrieval-independent and GM-triggered. Live website copying is omitted because published source terms do not establish permission for a persistent Forge mirror, even though the inspected page exposes structured data and permissive CORS. No copyrighted dataset ships with the system. A designated active GM plus same-origin Web Locks prevents ordinary concurrent sync attempts; no server-transaction guarantee is claimed.

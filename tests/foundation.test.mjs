@@ -7,6 +7,8 @@ class Field { constructor(options = {}) { this.options = options; } }
 class ArrayField extends Field { constructor(element, options) { super(options); this.element=element; } }
 class Schema extends Field { constructor(fields) { super(); this.fields = fields; } }
 class TypeDataModel {
+  static _cleanData(data) { return data; }
+  static validateJoint() {}
   constructor(data = {}) { Object.assign(this, defaults(this.constructor.defineSchema()), data); }
   validate() {
     // Offline contract check only, not Foundry's validation implementation.
@@ -22,7 +24,7 @@ class TypeDataModel {
         }
       }
     };
-    visit(this.constructor.defineSchema(),this); return true;
+    visit(this.constructor.defineSchema(),this); this.constructor.validateJoint(this); return true;
   }
 }
 class Sheet {
@@ -149,7 +151,7 @@ test("survivor context filters special Items and preserves active tab", async ()
 test("rerenders restore only draft fields and retain checkbox false", async () => {
   const sheet=new SurvivorSheet(); sheet.isEditable=true; sheet.actor={system:{}};
   const inputs=[{name:"name",value:"Remote"},{name:"system.rerollUsed",type:"checkbox",checked:true},{name:"system.notes",value:"Remote notes"}];
-  const handlers={};sheet.element={querySelectorAll:selector=>selector==="[name]"?inputs:[],addEventListener:(type,fn)=>handlers[type]=fn};
+  const handlers={};sheet.element={querySelector:()=>null, querySelectorAll:selector=>selector==="[name]"?inputs:[],addEventListener:(type,fn)=>handlers[type]=fn};
   sheet._draft.set("name","Unsaved name");sheet._draft.set("system.rerollUsed",false);
   sheet.tabGroups.primary="gear";
   await sheet._onRender({},{});
@@ -203,7 +205,7 @@ test("refined layout places Hunt XP on right and retains Gear panel markup", asy
 test("radio draft restores exactly one selection independently per group", async () => {
   const sheet=new SurvivorSheet();sheet.actor={system:{}};sheet.isEditable=true;
   const inputs=[{name:'system.courageChoice',type:'radio',value:'stalwart'}, {name:'system.courageChoice',type:'radio',value:'prepared'}, {name:'system.understandingChoice',type:'radio',value:''}];
-  const handlers={};sheet.element={querySelectorAll:s=>s==='[name]'?inputs:[],addEventListener:(t,fn)=>handlers[t]=fn};
+  const handlers={};sheet.element={querySelector:()=>null, querySelectorAll:s=>s==='[name]'?inputs:[],addEventListener:(t,fn)=>handlers[t]=fn};
   sheet._draft.set('system.courageChoice','prepared');sheet._draft.set('system.understandingChoice','');
   await sheet._onRender({},{});
   assert.equal(inputs[0].checked,false);assert.equal(inputs[1].checked,true);assert.equal(inputs[2].checked,true);
@@ -233,7 +235,7 @@ test('all five tabs, read-only progress totals and full-width counters render',a
 });
 test('progress actions immediately synchronize one authoritative total and track',()=>{
   const sheet=new SurvivorSheet();sheet.isEditable=true;const input={value:'0',dispatchEvent:event=>assert.equal(event.type,'input')};
-  const boxes=[1,2,3,4].map(value=>({dataset:{value:String(value)}}));sheet.element={querySelector:()=>input,querySelectorAll:()=>boxes};
+  const boxes=[1,2,3,4].map(value=>({dataset:{value:String(value)}}));sheet.element={querySelector:()=>input, querySelectorAll:()=>boxes};
   SurvivorSheet.progress.call(sheet,null,{dataset:{path:'system.huntXP',value:'3'}});assert.equal(Number(input.value),3);assert.deepEqual(boxes.map(b=>b.checked),[true,true,true,false]);
   SurvivorSheet.progress.call(sheet,null,{dataset:{path:'system.huntXP',value:'3'}});assert.equal(Number(input.value),2);
   sheet.isEditable=false;SurvivorSheet.progress.call(sheet,null,{dataset:{value:'4'}});assert.equal(Number(input.value),2);
@@ -241,7 +243,7 @@ test('progress actions immediately synchronize one authoritative total and track
 test('new family and image tabs preserve dirty fields and selection during rerender',async()=>{
   const sheet=new SurvivorSheet();sheet.isEditable=true;sheet.actor={system:{}};sheet.tabGroups.primary='family';
   const inputs=[{name:'system.notes',value:'server'},{name:'system.proficiencyUuid',value:''}];sheet._draft.set('system.notes','unsaved');sheet._draft.set('system.proficiencyUuid','Item.x');
-  sheet.element={querySelectorAll:s=>s==='[name]'?inputs:[],addEventListener:()=>{}};
+  sheet.element={querySelector:()=>null, querySelectorAll:s=>s==='[name]'?inputs:[],addEventListener:()=>{}};
   await sheet._onRender({},{});assert.equal(inputs[0].value,'unsaved');assert.equal(inputs[1].value,'Item.x');assert.equal(sheet.tabGroups.primary,'family');
 });
 test('Item proficiency form submits structured tags and derived name',async()=>{
@@ -312,4 +314,56 @@ test('untargeted Item drops retain the inherited native handler',async()=>{
   const sheet=new SurvivorSheet(),item={documentName:'Item',type:'resource'};
   assert.equal(await sheet._onDropItem({target:{closest:()=>null}},item),item);
   assert.equal(sheet.nativeDrop,item);
+});
+test('Survivor uses one cached native V14 DragDrop controller with root target and native callbacks',async()=>{
+  let count=0;foundry.applications.ux={DragDrop:class{constructor(config){this.config=config;count++;}},TextEditor:{getDragEventData:event=>event.data}};
+  const sheet=new SurvivorSheet();sheet.actor={isOwner:true};sheet.isEditable=true;
+  sheet._onDragStart=()=>{};sheet._onDragOver=()=>{};
+  const controller=sheet._dragDrop;assert.equal(sheet._dragDrop,controller);assert.equal(count,1);
+  assert.equal(controller.config.dropSelector,null);assert.equal(controller.config.dragSelector,'.draggable[data-item-id]');assert.equal(controller.config.permissions.drop(),true);
+  let calls=0;Sheet.prototype._onDrop=async()=>{calls++;};
+  const event={data:{type:'Item'},target:{closest:()=>null}};
+  await Promise.all([controller.config.callbacks.drop(event),controller.config.callbacks.drop(event)]);assert.equal(calls,1);
+  sheet.isEditable=false;assert.equal(controller.config.permissions.drop(),false);
+});
+test('bare UUID drops resolve once, route to Item handler and warn on unavailable references',async()=>{
+  const sheet=new SurvivorSheet();sheet.actor={isOwner:true};sheet.isEditable=true;
+  foundry.applications.ux={TextEditor:{getDragEventData:()=>({})}};
+  const item={documentName:'Item',type:'proficiency'};globalThis.fromUuid=async uuid=>uuid==='Item.valid'?item:null;
+  let handled=0;sheet._onDropItem=async(event,doc)=>{assert.equal(doc,item);handled++;};
+  const event={dataTransfer:{getData:()=> 'Item.valid'},target:{closest:()=>null}};
+  await Promise.all([sheet._onDrop(event),sheet._onDrop(event)]);assert.equal(handled,1);
+  const warnings=[];globalThis.ui={notifications:{warn:m=>warnings.push(m)}};
+  await sheet._onDrop({dataTransfer:{getData:()=> 'Item.gone'},target:event.target});assert.match(warnings[0],/accessible/);
+});
+test('Survivor has exactly one header Save, ten-column Hunt XP and enlarged read-only totals',()=>{
+  const html=render('survivor',{actor:{},system:{},editable:true});
+  assert.equal((html.match(/type="submit"/g)||[]).length,1);
+  assert.ok(html.indexOf('class="kdm-header-save"')<html.indexOf('</header>'));
+  assert.ok(html.indexOf('name="system.sex"')<html.indexOf('class="kdm-header-save"'));
+  assert.ok(!render('survivor',{actor:{},system:{},editable:false}).includes('type="submit"'));
+  const css=fs.readFileSync(new URL('../styles/kingdom-death.css',import.meta.url),'utf8');
+  assert.match(css,/kdm-hunt-xp \.kdm-track-boxes \{ display:grid; grid-template-columns:repeat\(10,18px\)/);
+  assert.match(css,/input.kdm-number-display \{ width:56px/);
+});
+
+test('Survival model cleans complete pairs, leaves partial updates intact and validates the invariant',()=>{
+  const original={survival:{value:5,limit:3},notes:'keep'};
+  SurvivorData._cleanData(original,{},{});assert.deepEqual(original,{survival:{value:3,limit:3},notes:'keep'});
+  const partial={survival:{limit:2}};SurvivorData._cleanData(partial,{},{});assert.deepEqual(partial,{survival:{limit:2}});
+  assert.throws(()=>SurvivorData.validateJoint({survival:{value:6,limit:5}}),/Survival/);
+  assert.throws(()=>SurvivorData.validateJoint({survival:{value:-1,limit:5}}),/Survival/);
+  assert.equal(new SurvivorData().validate(),true);
+});
+test('Survival submission clamps simultaneous edits and preserves unrelated draft data',()=>{
+  const sheet=new SurvivorSheet();sheet.actor={system:{gearGrid:{},survival:{value:5,limit:5}},items:{contents:[]}};
+  globalThis.ui={notifications:{info:()=>{}}};
+  const data=sheet._processFormData(null,null,{object:{system:{survival:{value:9,limit:3},notes:'keep'}}});
+  assert.deepEqual(data.system.survival,{value:3,limit:3});assert.equal(data.system.notes,'keep');
+});
+test('Living Glossary settings menu is GM restricted and template disables unavailable sync',()=>{
+  assert.equal(settings.find(s=>s[1]==='glossary')[2].restricted,true);
+  const html=render('living-glossary',{canSync:false,permissionError:'Only a GM can sync.'});
+  assert.match(html,/type="submit" disabled/);assert.match(html,/Only a GM/);
+  assert.match(render('living-glossary',{canSync:true}),/type="submit" >Sync Now/);
 });

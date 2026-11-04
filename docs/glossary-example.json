@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "source": {"id": "original-demo", "url": "https://example.org/original-demo"},
+  "entries": [
+    {"id": "example-timing", "title": "Example Timing", "description": "An original demonstration entry. Agree on a convenient moment to pause your session.", "updatedAt": "2026-11-04"},
+    {"id": "example-notes", "title": "Example Notes", "description": "An original demonstration entry. Record your group's questions on a separate notes page."}
+  ]
+}
