@@ -15,6 +15,14 @@ Unofficial, content-free foundation for a board-game-oriented system. System ID:
 
 Not included: playable combat, rolls, AI/HL automation, damage calculation, affinity bonuses, crafting, event content, migrations from other systems, or a White Lion pack. No copyrighted artwork, card text, rules passages, or proprietary content is shipped. All notes are plain text and escaped in templates. This is not affiliated with or endorsed by Kingdom Death.
 
+## Install with a manifest URL
+
+In Foundry Setup → Game Systems → Install System, paste:
+
+`https://github.com/paddirn/kingdom-death/releases/latest/download/system.json`
+
+On Forge, use its custom manifest installation option. The manifest and versioned ZIP are hosted as GitHub release assets. Version 0.1.0 targets **14.365 only**, and remains runtime-unverified. The ZIP import alternative is below.
+
 ## Install on The Forge (ZIP)
 
 1. Download the built `kingdom-death-0.1.0.zip`. Do not use GitHub's source ZIP if you want the curated package. To reproduce it: Node.js 22+, Python 3, `npm ci`, then `npm run build`. Output is in `dist/`.
@@ -49,4 +57,4 @@ npm run build
 
 Node tests cover pure gear/campaign rules, controller permission guards and update payloads, template rendering, schema structure and registration with a minimal API stub. They do **not** establish Foundry data validation, rendering, database or multiplayer compatibility. Validation checks JavaScript syntax, module/template paths, JSON, and manifest invariants. Runtime has no npm dependencies or external network calls.
 
-See [architecture](docs/architecture.md), [decisions](docs/decisions.md), [development plan](docs/development-plan.md), and [release procedure](docs/releases.md). GitHub Actions builds a downloadable artifact on pushes and PRs; it does not publish a release automatically.
+See [architecture](docs/architecture.md), [decisions](docs/decisions.md), [development plan](docs/development-plan.md), and [release procedure](docs/releases.md). The validation workflow builds artifacts on pushes and PRs. The dedicated v0.1.0 release workflow validates, packages and publishes the explicitly requested first release.

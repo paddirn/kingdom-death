@@ -7,7 +7,7 @@
 - **Embedded gear references.** Nine keyed slots provide stable coordinates. Shared world Items are templates, not equipped records. Equipment cannot be rotated in this foundation. Affinity storage is deliberately limited to simple edge colors.
 - **Explicit Save.** Native forms persist changes after Save. Inventory actions and remote updates can rerender sheets, so instructions tell users to save first. Database transactions, undo, and conflict-safe simultaneous editing are not claimed.
 - **Content separation.** Uploaded rules were consulted privately for record structure (including head/brain injury distinctions), not copied into repository. No scanned source or proprietary content enters ZIP/build artifacts.
-- **Distribution.** Source commit is not deployment. Allowlisted ZIP is importable via Forge's custom-package workflow. Public manifest/download URLs are added only when release assets actually exist; no knowingly broken release URLs in 0.1.0.
+- **Distribution.** Source commit is not deployment. Allowlisted ZIP is importable via Forge's custom-package workflow. The requested v0.1.0 release publishes both manifest and ZIP assets through a dedicated workflow. Runtime-unverified status is retained; release publication does not imply successful Forge testing.
 - **Repository bootstrap.** Repository initially had no commits. A README-only main commit establishes a PR base; implementation stays on `feat/system-foundation`.
 
 ## Official API references consulted

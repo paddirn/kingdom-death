@@ -48,5 +48,7 @@
     "units": "spaces"
   },
   "url": "https://github.com/paddirn/kingdom-death",
-  "bugs": "https://github.com/paddirn/kingdom-death/issues"
+  "bugs": "https://github.com/paddirn/kingdom-death/issues",
+  "manifest": "https://github.com/paddirn/kingdom-death/releases/latest/download/system.json",
+  "download": "https://github.com/paddirn/kingdom-death/releases/download/v0.1.0/kingdom-death-0.1.0.zip"
 }

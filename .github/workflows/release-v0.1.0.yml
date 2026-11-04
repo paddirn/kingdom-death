@@ -1,0 +1,51 @@
+name: Publish v0.1.0
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/release-v0.1.0.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: release-v0.1.0
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Check requested release version
+        run: node -e "const m=require('./system.json'); if(m.version!=='0.1.0') process.exit(1)"
+      - run: npm ci
+      - run: npm run build
+      - name: Create and publish release with both assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if gh release view v0.1.0 >/dev/null 2>&1; then
+            echo 'Release already exists; refusing to overwrite it.'
+            exit 1
+          fi
+          cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
+          Initial content-free Kingdom Death: Monster system foundation.
+
+          Targets Foundry VTT 14.365 only. Runtime verification in Foundry/The Forge is still pending; this release does not claim verified runtime compatibility.
+
+          Includes Survivor, Monster and Settlement records, seven Item types, a 3×3 gear grid, resource storage and a shared campaign controller. Combat and deck automation remain future work. No proprietary game content is included.
+
+          Install using https://github.com/paddirn/kingdom-death/releases/latest/download/system.json
+
+          Offline validation includes 24 tests, syntax/template/manifest/path checks and ZIP integrity checks. See README.md for the Forge smoke test.
+          NOTES
+          gh release create v0.1.0 dist/system.json dist/kingdom-death-0.1.0.zip --target "$GITHUB_SHA" --title 'v0.1.0 — System Foundation' --notes-file "$RUNNER_TEMP/release-notes.md" --draft
+          gh release edit v0.1.0 --draft=false --latest
