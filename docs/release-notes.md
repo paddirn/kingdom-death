@@ -1,9 +1,7 @@
-# v0.1.1 — Forge installation metadata correction
+# v0.1.2 — Survivor sheet redesign
 
-Adds explicit `compatibility.verified: "14.365"` alongside minimum/maximum 14.365. This declares the requested compatibility metadata for package discovery and labeling. **No successful Foundry/Forge runtime test is claimed.** A green compatibility badge is not evidence that the installation or world-creation issue has been reproduced and resolved.
+Adds Attributes, Gear and Specials tabs with a persistent survivor name header. Attributes follows the supplied printed-sheet organization with six stat boxes, injury rows and manual progression tracks. Gear preserves existing assignment and inventory behavior. Specials manages embedded Fighting Arts, Disorders and Abilities with the requested flags and notes.
 
-The v0.1.0 public release was inspected: ZIP folder layout and embedded manifest were correct, download URL resolved to its actual asset, and there were no required/recommended package dependencies. Missing verified metadata is the confirmed metadata omission. It is not established as the sole cause of the unavailable world-system option.
+Adds defaulted Survivor fields while preserving existing data paths and embedded Item references. Draft text and checkbox changes are retained through sheet rerenders and cleared on successful Save.
 
-Adds release-byte checks for identity, compatibility, versioned URLs, matching manifests, ZIP layout/integrity, missing entry/import/template/style files and unwanted dependencies. A manual release workflow validates downloaded draft assets before publishing and checks public URLs afterward.
-
-After updating to 0.1.1 on Forge, stop/start the server on exactly 14.365 and confirm Kingdom Death: Monster appears in the new-world system selector. See docs/installation-investigation.md for diagnostics if it does not.
+Validated with 28 Node tests and 9 Python tests plus syntax, template, manifest, module-path and ZIP checks. Targets Foundry 14.365 only. Foundry/Forge runtime and visual verification remain pending. See docs/survivor-sheet.md for acceptance checks.
