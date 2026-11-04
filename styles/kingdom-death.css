@@ -32,3 +32,29 @@
 .kingdom-death .kdm-inventory small { display: block; }
 .kingdom-death .kdm-inventory button { width: auto; }
 .kingdom-death footer { position: sticky; bottom: 0; background: var(--kdm-bg); padding: 8px 0; }
+
+/* Survivor: editable printed-sheet organization, scoped to this sheet only. */
+.kdm-survivor .kdm-survivor-header { position: sticky; top: 0; z-index: 3; background: var(--kdm-bg); padding: 8px; border-bottom: 2px solid var(--kdm-accent); }
+.kdm-survivor .kdm-survivor-header input { font: 24px Georgia,serif; height: 40px; }
+.kdm-survivor .kdm-tabs { display:flex; gap:6px; position:sticky; top:80px; z-index:2; background:var(--kdm-bg); padding:6px; }
+.kdm-survivor .kdm-tabs button { flex:1; }
+.kdm-survivor .kdm-tabs .active { border-bottom:3px solid var(--kdm-accent); }
+.kdm-survivor .tab { display:none; }
+.kdm-survivor .tab.active { display:block; }
+.kdm-survivor .kdm-paper-columns { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.kdm-survivor .kdm-paper-columns > div { display:flex; flex-direction:column; gap:12px; min-width:0; }
+.kdm-survivor section { border-radius:0; border:1px solid var(--kdm-muted); margin-bottom:10px; }
+.kdm-survivor .kdm-stat-boxes { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); border:1px solid var(--kdm-muted); }
+.kdm-survivor .kdm-stat-boxes label { text-align:center; padding:5px; border-right:1px solid var(--kdm-muted); font-size:10px; }
+.kdm-survivor .kdm-stat-boxes input { font:24px Georgia,serif; height:50px; text-align:center; }
+.kdm-survivor .kdm-location { display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--kdm-border); padding:7px 0; }
+.kdm-survivor .kdm-location h3 { flex:1; font:22px Georgia,serif; }
+.kdm-survivor .kdm-armor { width:65px; }
+.kdm-survivor .kdm-track-boxes { display:flex; flex-wrap:wrap; gap:4px; }
+.kdm-survivor .kdm-track-boxes input.milestone { outline:2px solid var(--kdm-accent); outline-offset:1px; }
+.kdm-survivor .kdm-track > label { flex-direction:row; align-items:center; }
+.kdm-survivor .kdm-track > label input { width:65px; }
+.kdm-survivor .kdm-inline { flex-direction:row; align-items:center; }
+.kdm-survivor .kdm-gear-cell { aspect-ratio: .72; min-height:180px; border:2px solid var(--kdm-border); }
+@container (max-width: 650px) { .kdm-survivor .kdm-paper-columns { grid-template-columns:1fr; } }
+.kdm-survivor .window-content { container-type:inline-size; }

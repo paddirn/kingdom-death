@@ -1,0 +1,17 @@
+# Survivor sheet redesign
+
+Uses the supplied flattened official Survivor record as a visual reference only: bordered information blocks, six stat boxes, a two-column Attributes view, injury rows, and boxed progress tracks. No PDF, scanned artwork or rule passages are distributed. Gear and Specials occupy separate tabs as requested; the printed sheet places Specials alongside attributes. Narrow windows stack the Attributes columns. The native HTML fields remain editable, with one Save button for all tabs.
+
+## Data and interactions
+
+All existing fields and embedded Item IDs are preserved. Additive defaults require no migration: sex defaults to unspecified; cannotSpendSurvival, cannotUseFightingArts, skipNextHunt, rerollUsed and four ageMilestones default false; impairments and oncePerLifetime default empty. weaponProficiency holds type, value, specialist and master. Existing progression counts remain authoritative. Tracks are editable representations of those counts; bold milestone outlines are references only. Age, specialist/master and all effects are resolved manually. Maximum 3 is informational only.
+
+ApplicationV2's native tab action, TABS configuration and tabGroups maintain the active tab on the sheet instance. Switching tabs changes visibility without rebuilding/submitting the form. All tabs remain inside one form, including hidden inputs. Draft named inputs are captured on input/change and restored after document-driven rerenders. Untouched fields show current document data; conflicting local drafts stay local until Save. Successful submission clears the submitted draft, failed submission retains it. Closing/reloading the browser ends this in-memory draft: Save before closing. This is not a collaborative merge protocol.
+
+Gear assignment and duplicate-slot validation are reused. Native Item drop behavior is inherited. Specials filter fightingArt, disorder and ability embedded Items and reuse the existing guarded Add/Edit/Remove actions. Draft restoration also covers rerenders caused by embedded Item changes. All controls obey native sheet edit permissions; tab navigation is available to viewers.
+
+## Validation
+
+Offline tests cover new schema/default contracts, legacy path retention, filtered Item context, active-tab markup, draft text/unchecked-checkbox restoration, successful and failed Save, and existing gear validation. These use API stubs and do not prove Foundry persistence or rendering.
+
+Runtime acceptance on Foundry **14.365** is pending. Test a legacy Actor and a new Actor, all three tabs at wide/narrow sizes, unsaved text and checkbox edits while switching tabs/adding/deleting Items/receiving remote updates, Save/reload of every new field, invalid duplicate gear assignment, progression editing above/below milestone values, and Owner versus Observer behavior. Confirm native drag/drop still copies gear, and that Specials create/edit/delete refresh their own lists. No Monster or Settlement interface change is part of this redesign. Release/version publication is a separate reviewed step.
