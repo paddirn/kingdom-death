@@ -18,7 +18,8 @@ export class SurvivorSheet extends KDMActorSheet {
     await super._onRender(context, options);
     for (const input of this.element.querySelectorAll("[name]")) {
       if (this._draft.has(input.name)) {
-        if (input.type === "checkbox") input.checked = this._draft.get(input.name);
+        if (input.type === "radio") input.checked = input.value === this._draft.get(input.name);
+        else if (input.type === "checkbox") input.checked = this._draft.get(input.name);
         else input.value = this._draft.get(input.name);
       }
     }
@@ -26,10 +27,13 @@ export class SurvivorSheet extends KDMActorSheet {
       const input = this.element.querySelector(`[name="${box.dataset.path}"]`);
       if (input) box.checked = Number(box.dataset.value) <= Number(input.value);
     }
+    for (const type of ["input", "change"]) this._draftEventRoot?.removeEventListener?.(type, this._rememberDraft);
     const remember = event => {
       const input = event.target;
-      if (this.isEditable && input.name) this._draft.set(input.name, input.type === "checkbox" ? input.checked : input.value);
+      if (this.isEditable && input.name && (input.type !== "radio" || input.checked)) this._draft.set(input.name, input.type === "checkbox" ? input.checked : input.value);
     };
+    this._draftEventRoot = this.element;
+    this._rememberDraft = remember;
     this.element.addEventListener("input", remember);
     this.element.addEventListener("change", remember);
   }
@@ -46,7 +50,12 @@ export class SurvivorSheet extends KDMActorSheet {
     const track = (path, value, length, milestones) => ({path, value,
       boxes: Array.from({length}, (_, i) => ({value: i + 1, checked: i < value, milestone: milestones.includes(i + 1)}))});
     const owned = type => this.actor.items.contents.filter(i => i.type === type).toSorted((a,b) => a.sort - b.sort).map(i => ({id:i.id,name:i.name}));
-    return {...context, active: {[this.tabGroups.primary]: true},
+    const choiceGroup = (path, entries) => ({path, options: [{value: "", title: "None", description: ""}, ...entries.map(([value,title,description]) => ({value,title,description}))].map(option => ({...option, selected: (this.actor.system[path] ?? "") === option.value}))});
+    return {...context,
+      survivalActions: ["dodge", "encourage", "surge", "dash", "endure"].map(key => ({key, label: key[0].toUpperCase() + key.slice(1), checked: this.actor.system.survivalActions?.[key] ?? false})),
+      courageOptions: choiceGroup("courageChoice", [["stalwart","Stalwart","Can't be knocked down by brain trauma or intimidate."],["prepared","Prepared","Add Hunt XP to your roll when determining a straggler."],["matchmaker","Matchmaker","Spend 1 endeavor to trigger Intimacy story event."]]),
+      understandingOptions: choiceGroup("understandingChoice", [["analyze","Analyze","Look at top AI card and return it to the top of the deck."],["explore","Explore","Add +2 to your investigate roll results."],["tinker","Tinker","+1 endeavor when a returning survivor."]]),
+      active: {[this.tabGroups.primary]: true},
       sexChoices: ["", "M", "F"].map(value => ({value, selected: this.actor.system.sex === value})),
       huntTrack: track("huntXP", this.actor.system.huntXP, 16, [2,6,10,15,16]),
       courageTrack: track("courage", this.actor.system.courage, 9, [3,9]),

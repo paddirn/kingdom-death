@@ -145,7 +145,7 @@ test("survivor context filters special Items and preserves active tab", async ()
   for (const key of ["cannotUseFightingArts","impairments","skipNextHunt","oncePerLifetime","rerollUsed"]) assert.ok(html.includes(`name="system.${key}"`));
 });
 test("rerenders restore only draft fields and retain checkbox false", async () => {
-  const sheet=new SurvivorSheet(); sheet.isEditable=true;
+  const sheet=new SurvivorSheet(); sheet.isEditable=true; sheet.actor={system:{}};
   const inputs=[{name:"name",value:"Remote"},{name:"system.rerollUsed",type:"checkbox",checked:true},{name:"system.notes",value:"Remote notes"}];
   const handlers={};sheet.element={querySelectorAll:selector=>selector==="[name]"?inputs:[],addEventListener:(type,fn)=>handlers[type]=fn};
   sheet._draft.set("name","Unsaved name");sheet._draft.set("system.rerollUsed",false);
@@ -175,4 +175,36 @@ test("new Survivor constructs with default values and passes offline validation 
   for (const field of [schema.sex,schema.impairments,schema.oncePerLifetime,schema.weaponProficiency.fields.type]) {
     assert.equal(field.options.initial, ""); assert.equal(field.options.blank,true);
   }
+});
+test("refinement defaults validate and preserve old milestone fields", () => {
+  const model=new SurvivorData();assert.equal(model.validate(),true);
+  assert.deepEqual(model.survivalActions,{dodge:false,encourage:false,surge:false,dash:false,endure:false});
+  assert.equal(model.courageChoice,'');assert.equal(model.understandingChoice,'');
+  for (const [key,value] of [['courageChoice','prepared'],['understandingChoice','analyze']]) {
+    assert.equal(new SurvivorData({[key]:value}).validate(),true);
+    assert.throws(()=>new SurvivorData({[key]:'wrong'}).validate(),/invalid choice/);
+  }
+  assert.deepEqual(Object.keys(model.ageMilestones),['age1','age2','age3','age4']);
+});
+test("refined layout places Survivor on right and retains Gear panel markup", async () => {
+  game.i18n={localize:key=>key};const sheet=new SurvivorSheet();
+  sheet.actor={system:defaults(SurvivorData.defineSchema()),items:{contents:[],filter:()=>[]}};
+  const html=render('survivor',await sheet._prepareContext({}));
+  assert.ok(html.indexOf('<h2>Survival')<html.indexOf('<h2>Survivor'));
+  assert.ok(html.indexOf('<h2>Survivor')<html.indexOf('<h2>Weapon Proficiency'));
+  assert.equal((html.match(/name="system.sex"/g)||[]).length,1);
+  for(const key of ['dodge','encourage','surge','dash','endure']) assert.ok(html.includes(`name="system.survivalActions.${key}"`));
+  for(const key of ['courageChoice','understandingChoice']) assert.equal((html.match(new RegExp(`name="system.${key}"`,'g'))||[]).length,4);
+  for(const text of ['XP 2','XP 6','XP 10','XP 15','Heavy Injury: Knocked Down (all locations)','Select Before Hunt']) assert.ok(html.includes(text));
+  assert.ok(html.includes('name="system.gearGrid.'));
+});
+test("radio draft restores exactly one selection independently per group", async () => {
+  const sheet=new SurvivorSheet();sheet.actor={system:{}};sheet.isEditable=true;
+  const inputs=[{name:'system.courageChoice',type:'radio',value:'stalwart'}, {name:'system.courageChoice',type:'radio',value:'prepared'}, {name:'system.understandingChoice',type:'radio',value:''}];
+  const handlers={};sheet.element={querySelectorAll:s=>s==='[name]'?inputs:[],addEventListener:(t,fn)=>handlers[t]=fn};
+  sheet._draft.set('system.courageChoice','prepared');sheet._draft.set('system.understandingChoice','');
+  await sheet._onRender({},{});
+  assert.equal(inputs[0].checked,false);assert.equal(inputs[1].checked,true);assert.equal(inputs[2].checked,true);
+  handlers.change({target:{name:'system.courageChoice',type:'radio',value:'',checked:true}});
+  assert.equal(sheet._draft.get('system.courageChoice'),'');
 });
