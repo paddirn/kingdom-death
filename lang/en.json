@@ -1,0 +1,18 @@
+{
+  "TYPES": {
+    "Actor": {
+      "survivor": "Survivor",
+      "monster": "Monster",
+      "settlement": "Settlement"
+    },
+    "Item": {
+      "gear": "Gear",
+      "resource": "Resource",
+      "fightingArt": "Fighting Art",
+      "disorder": "Disorder",
+      "ability": "Ability",
+      "innovation": "Innovation",
+      "settlementLocation": "Settlement Location"
+    }
+  }
+}
