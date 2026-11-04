@@ -1,3 +1,5 @@
+import { clampSurvival } from "../rules/survival.mjs";
+import { bindSurvival } from "../ui/survival.mjs";
 import { receiveItem, clearGear, deleteInventoryItem } from "../inventory/operations.mjs";
 import { dropTarget, acceptsItem, oncePerDrop, installDropFeedback } from "../ui/item-drops.mjs";
 import { familyContext } from "../family/context.mjs";
@@ -57,6 +59,7 @@ export class SurvivorSheet extends KDMActorSheet {
     this._rememberDraft = remember;
     this.element.addEventListener("input", remember);
     this.element.addEventListener("change", remember);
+    bindSurvival(this.element, this.isEditable, message => ui.notifications.info(message));
     installDropFeedback(this);
     this.updateSexBar(this.element.querySelector?.('[name="system.sex"]')?.value ?? this.actor.system.sex);
   }
@@ -188,6 +191,13 @@ export class SurvivorSheet extends KDMActorSheet {
     validateGrid(grid, this.actor.items.contents);
     delete data.system.gearGrid;
     if(this._draft.has("system.proficiencyUuid")) data.system.proficiencyUuid=this._draft.get("system.proficiencyUuid");
+    if (data.system.survival) {
+      const proposed = {...this.actor.system?.survival, ...data.system.survival};
+      data.system.survival = clampSurvival(proposed);
+      if (Number(proposed.value) !== data.system.survival.value || Number(proposed.limit) !== data.system.survival.limit) {
+        ui.notifications.info(`Survival corrected to ${data.system.survival.value}; limit ${data.system.survival.limit}.`);
+      }
+    }
     return data;
   }
 }
