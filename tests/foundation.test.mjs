@@ -313,3 +313,24 @@ test('untargeted Item drops retain the inherited native handler',async()=>{
   assert.equal(await sheet._onDropItem({target:{closest:()=>null}},item),item);
   assert.equal(sheet.nativeDrop,item);
 });
+test('Survivor uses one cached native V14 DragDrop controller with root target and native callbacks',async()=>{
+  let count=0;foundry.applications.ux={DragDrop:class{constructor(config){this.config=config;count++;}},TextEditor:{getDragEventData:event=>event.data}};
+  const sheet=new SurvivorSheet();sheet.actor={isOwner:true};sheet.isEditable=true;
+  sheet._onDragStart=()=>{};sheet._onDragOver=()=>{};
+  const controller=sheet._dragDrop;assert.equal(sheet._dragDrop,controller);assert.equal(count,1);
+  assert.equal(controller.config.dropSelector,null);assert.equal(controller.config.dragSelector,'.draggable[data-item-id]');assert.equal(controller.config.permissions.drop(),true);
+  let calls=0;Sheet.prototype._onDrop=async()=>{calls++;};
+  const event={data:{type:'Item'},target:{closest:()=>null}};
+  await Promise.all([controller.config.callbacks.drop(event),controller.config.callbacks.drop(event)]);assert.equal(calls,1);
+  sheet.isEditable=false;assert.equal(controller.config.permissions.drop(),false);
+});
+test('bare UUID drops resolve once, route to Item handler and warn on unavailable references',async()=>{
+  const sheet=new SurvivorSheet();sheet.actor={isOwner:true};sheet.isEditable=true;
+  foundry.applications.ux={TextEditor:{getDragEventData:()=>({})}};
+  const item={documentName:'Item',type:'proficiency'};globalThis.fromUuid=async uuid=>uuid==='Item.valid'?item:null;
+  let handled=0;sheet._onDropItem=async(event,doc)=>{assert.equal(doc,item);handled++;};
+  const event={dataTransfer:{getData:()=> 'Item.valid'},target:{closest:()=>null}};
+  await Promise.all([sheet._onDrop(event),sheet._onDrop(event)]);assert.equal(handled,1);
+  const warnings=[];globalThis.ui={notifications:{warn:m=>warnings.push(m)}};
+  await sheet._onDrop({dataTransfer:{getData:()=> 'Item.gone'},target:event.target});assert.match(warnings[0],/accessible/);
+});

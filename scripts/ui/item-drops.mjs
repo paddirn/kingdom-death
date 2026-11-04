@@ -30,7 +30,19 @@ export function installDropFeedback(sheet) {
       if(sequence===generation && resolved.testUserPermission(game.user,"OBSERVER")) item=resolved;
     } catch { /* Invalid or inaccessible native payload: no valid highlight. */ }
   };
-  doc.addEventListener('dragstart',resolve,{signal});
+  // Directory controllers may stop bubbling. Observe at each source-path node after
+  // its native listeners, without stopping propagation or changing the payload.
+  doc.defaultView.addEventListener('dragstart',event=>{
+    let captured=false;
+    const observe=sourceEvent=>{
+      if(sourceEvent!==event || captured) return;
+      const data=foundry.applications.ux.TextEditor.getDragEventData(sourceEvent);
+      if(data.type!=="Item") return;
+      captured=true; void resolve(sourceEvent);
+    };
+    end();
+    for(const node of event.composedPath()) node.addEventListener?.('dragstart',observe,{once:true,signal});
+  },{signal,capture:true});
   root.addEventListener('keydown',event=>{
     const link=event.target.closest?.('a[role="button"][data-action]');
     if(link && ['Enter',' '].includes(event.key)) {event.preventDefault();link.click();}
@@ -41,7 +53,9 @@ export function installDropFeedback(sheet) {
     event.preventDefault();
     const valid=acceptsItem(target,item,sheet.isEditable);
     show(valid ? target : null);
-    if(event.dataTransfer) event.dataTransfer.dropEffect=valid ? 'copy' : 'none';
+    // Unknown is not invalid: protected dragover data and asynchronous compendium lookup
+    // must never veto delivery to the native drop handler. Validate the actual document there.
+    if(event.dataTransfer) event.dataTransfer.dropEffect=sheet.isEditable ? 'copy' : 'none';
   },{signal});
   root.addEventListener('dragleave',event=>{
     if(active && !active.contains(event.relatedTarget)) clear();

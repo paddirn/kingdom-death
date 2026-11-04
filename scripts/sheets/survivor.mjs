@@ -9,6 +9,18 @@ import { ATTRIBUTES, LOCATIONS } from "../rules/constants.mjs";
 import { gridCells, validateGrid } from "../rules/gear-grid.mjs";
 export class SurvivorSheet extends KDMActorSheet {
   static TABS = {primary: {initial: "attributes", tabs: [{id: "attributes", label: "Attributes"}, {id: "gear", label: "Gear"}, {id: "specials", label: "Specials"}, {id:"family",label:"Family"}, {id:"image",label:"Image"}]}};
+  // ActorSheetV2 binds this cached controller during its native render lifecycle.
+  // One root drop target covers Items, UUID links and Family Actors without nested bindings.
+  get _dragDrop() {
+    return this._kdmDragDrop ??= new foundry.applications.ux.DragDrop({
+      dragSelector: ".draggable[data-item-id]", dropSelector: null,
+      permissions: {dragstart: this._canDragStart.bind(this), drop: this._canDragDrop.bind(this)},
+      callbacks: {dragstart: this._onDragStart.bind(this), dragover: this._onDragOver.bind(this), drop: this._onDrop.bind(this)}
+    });
+  }
+  _canDragDrop() { return this.isEditable && this.actor.isOwner; }
+  _canDragStart() { return this.isEditable && this.actor.isOwner; }
+  _dropEvents = new WeakMap();
   tabGroups = {primary: "attributes"};
   _draft = new Map();
   static DEFAULT_OPTIONS = {classes: ["kdm-survivor"], position: {width: 900, height: 850},
@@ -109,15 +121,26 @@ export class SurvivorSheet extends KDMActorSheet {
       } catch(error) {ui.notifications.warn(error.message);}
     });
   }
-  async _onDrop(event) {
+  _onDrop(event) {
+    // Native controller owns drop delivery. Feedback listeners never dispatch a second drop.
+    if(!this._dropEvents.has(event)) this._dropEvents.set(event,this._handleSurvivorDrop(event));
+    return this._dropEvents.get(event);
+  }
+  async _handleSurvivorDrop(event) {
     try {
-      if(dropTarget(event.target)) {
-        if(!this.isEditable) return;
-        const data=foundry.applications.ux.TextEditor.getDragEventData(event);
-        if(data.type!=="Item") {ui.notifications.warn("Drop an Item on this target.");return;}
+      if(!this._canDragDrop()) return;
+      const data=foundry.applications.ux.TextEditor.getDragEventData(event);
+      if(!data.type) {
+        const raw=event.dataTransfer?.getData("text/plain")?.trim() ?? "";
+        const uuid=raw.match(/^@UUID\[([^\]]+)\](?:\{[^}]*\})?$/)?.[1] ?? raw;
+        const document=uuid ? await fromUuid(uuid) : null;
+        if(document?.documentName==="Item") return await this._onDropItem(event,document);
+        if(document?.documentName==="Actor" && !dropTarget(event.target)) return await this._onDropActor(event,document);
+        throw new Error("Drop an accessible Foundry Item or Survivor Actor reference.");
       }
+      if(dropTarget(event.target) && data.type!=="Item") throw new Error("Drop an Item on this target.");
       return await super._onDrop(event);
-    }
+    } catch(error) {ui.notifications.warn(`Drop failed: ${error.message}`);}
     finally { this._clearDropFeedback?.(); }
   }
   static async clearGear(event,target) {
