@@ -1,11 +1,11 @@
-# v0.1.6 — Survivor layout and visual gear grid
+# v0.1.7 — Survivor drop repair and Living Glossary
 
-Replaces dropdown gear assignment with a square image-card grid. World and compendium Gear creates an owned copy; owned Gear moves between cells without duplication. Replacing or clearing a cell keeps displaced Items in Inventory. Confirmed Inventory deletion clears equipped references.
+Repairs a drag-feedback veto that could suppress unresolved external Item drops and explicitly connects the native V14 drag/drop controller. Preserves inventory/grid operations and Family routing, with single-event handling and visible invalid-drop feedback.
 
-Adds shared Item drop routing and feedback for Gear cells, Inventory, Proficiency and matching Specials. Inventory uses a responsive three-column layout; Specials uses two columns. Proficiency is a compact name-only native document link and drop target.
+Moves Save Changes into the persistent Survivor header, arranges Hunt XP as 10+6 boxes and enlarges read-only progression totals. Adds live Survival clamping, submission normalization and model cleaning/joint validation for zero ≤ Current ≤ Limit.
 
-Refines Attributes with a Hunt XP heading, Retired beside Dead, hidden legacy milestone controls, accessible armor labels, single-line Survival Limit and a Sex-colored header separator. Paired columns align without fixed module heights. Existing data paths, Family and Image functionality remain intact.
+Adds a GM-only Living Glossary manager under Configure Settings. Import authorized normalized JSON into native Journal pages, with stable IDs, incremental updates/renames, preserved manual pages, concurrent-sync guards and partial-failure reports. Includes an original sample and schema, not copyrighted glossary content. Live website scraping is not enabled because source permission for a persistent mirror was not established.
 
-Validated with 69 Node and 9 Python tests plus syntax, template, manifest, module-path and ZIP checks. Targets Foundry 14.365 only. Actual Foundry rendering and drag-and-drop remain unverified. Detached-window drag feedback may be unavailable when source dragstart is not observable. Coordinate simultaneous inventory edits; the queue serializes this client's operations only.
+Validation: 85 JavaScript tests and 9 Python packaging tests, plus syntax, module paths, templates, manifest and ZIP inspection. Targets Foundry 14.365 only. Actual Foundry rendering, native drag delivery and reload persistence remain unverified. Published V14 docs currently describe 14.370; no newer target is introduced.
 
-After updating, restart/reload Forge and follow docs/survivor-drag-drop.md for manual acceptance checks. Gear and inventory operations save immediately; ordinary fields and Proficiency links use Save Changes.
+After updating on Forge, restart the game and reload clients. Follow docs/survivor-drag-drop.md for exact runtime tests and docs/living-glossary.md for import instructions. Back up your world first. Client-side operation queues and glossary sync guards are not server transactions across disconnected devices.
