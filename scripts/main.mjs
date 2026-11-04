@@ -1,3 +1,4 @@
+import { cleanupDeletedGear } from "./inventory/operations.mjs";
 import { KDMItem } from "./documents/item.mjs";
 import { SYSTEM_ID } from "./rules/constants.mjs";
 import { SurvivorData } from "./models/survivor.mjs";
@@ -41,4 +42,10 @@ for (const event of ["updateItem", "deleteItem"]) Hooks.on(event, item => {
   for (const actor of game.actors.contents) if (actor.system.proficiencyUuid === item.uuid) {
     for (const app of Object.values(actor.apps)) if (app.rendered) app.render({force:false});
   }
+});
+
+Hooks.on("deleteItem", (item, options, userId) => {
+  const actor=item.parent;
+  if(userId!==game.user.id || actor?.type!=="survivor" || item.type!=="gear" || !actor.isOwner) return;
+  cleanupDeletedGear(actor,item.id).catch(error=>ui.notifications.warn(`Gear cleanup failed: ${error.message}. Clear the missing cell manually.`));
 });

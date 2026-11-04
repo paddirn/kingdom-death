@@ -8,7 +8,7 @@ All existing fields and embedded Item IDs are preserved. Additive defaults requi
 
 ApplicationV2's native tab action, TABS configuration and tabGroups maintain the active tab on the sheet instance. Switching tabs changes visibility without rebuilding/submitting the form. All tabs remain inside one form, including hidden inputs. Draft named inputs are captured on input/change and restored after document-driven rerenders. Untouched fields show current document data; conflicting local drafts stay local until Save. Successful submission clears the submitted draft, failed submission retains it. Closing/reloading the browser ends this in-memory draft: Save before closing. This is not a collaborative merge protocol.
 
-Gear assignment and duplicate-slot validation are reused. Native inventory Item drop behavior is inherited; the dedicated Proficiency link zone intercepts drops to reference Items without copying them. Specials filter fightingArt, disorder and ability embedded Items and reuse the existing guarded Add/Edit/Remove actions. Draft restoration also covers rerenders caused by embedded Item changes. All controls obey native sheet edit permissions; tab navigation is available to viewers.
+Gear assignment and duplicate-slot validation are reused. A shared drop router handles Gear cells, Inventory, Proficiency and matching Specials. Untargeted drops retain native behavior. Specials filter fightingArt, disorder and ability embedded Items and reuse the existing guarded Add/Edit/Remove actions. Draft restoration also covers rerenders caused by embedded Item changes. All controls obey native sheet edit permissions; tab navigation is available to viewers.
 
 ## Validation
 
@@ -24,7 +24,7 @@ The Node regression constructs the Survivor subclass with defaults under the exi
 
 ## Refinements
 
-Attributes now places Survival/stat boxes/Brain/Injuries in the left column and Survivor/Hunt XP above Weapon Proficiency in the right. Sex shares the name header row. Informational instructions and original anatomical SVG silhouettes supplement the printed-sheet organization; no cropped icons are shipped.
+Attributes now places Survival/stat boxes/Brain/Injuries in the left column and Hunt XP above Weapon Proficiency in the right. Sex shares the name header row. Informational instructions and original anatomical SVG silhouettes supplement the printed-sheet organization; no cropped icons are shipped.
 
 `survivalActions.{dodge,encourage,surge,dash,endure}` are default-false records. `courageChoice` and `understandingChoice` use explicit blank-permitted enums with an empty default; a None radio returns each group to no choice. All effects remain manual. Existing ageMilestones paths retain their values with XP labels.
 
@@ -35,3 +35,7 @@ Regression coverage includes numeric stepping/bounds/negatives/decimals, disable
 ## Family, Proficiency and images
 
 See [feature details and runtime checklist](family-proficiency-images.md) for the five-tab layout, read-only track totals, custom token counters, reciprocal family graph and shared image controls. Family and image actions save immediately; ordinary form fields and Proficiency links use Save Changes.
+
+## Compact controls and drag targets
+
+The [current drop-target guide](survivor-drag-drop.md) supersedes earlier dropdown assignment instructions. Age milestone controls are hidden while stored values remain; Retired moves to Condition & Notes. The header separator replaces the standalone Sex bar. Gear operations save immediately and use existing slot IDs.

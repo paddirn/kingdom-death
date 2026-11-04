@@ -92,7 +92,6 @@
 .kingdom-death .kdm-radio-option input[type=radio] { appearance:auto; -webkit-appearance:radio; flex:0 0 16px; width:16px; height:16px; margin:4px; outline:1px solid var(--kdm-border); outline-offset:3px; accent-color:var(--kdm-accent); }
 .kingdom-death .kdm-radio-option input[type=radio]::before, .kingdom-death .kdm-radio-option input[type=radio]::after { content:none; }
 .kingdom-death .kdm-radio-option input[type=radio]:focus-visible { outline:2px solid var(--kdm-accent); }
-.kdm-survivor .kdm-sex-bar { height:5px; flex:none; background:var(--sex-color,#888); }
 .kdm-survivor .kdm-survivor-header > label:last-child { flex:0 0 140px; }
 .kdm-survivor .kdm-survivor-header select { height:40px; }
 .kdm-survivor .kdm-tabs { top:110px; flex-wrap:wrap; }
@@ -137,3 +136,38 @@
 .kdm-survivor .kdm-parents::before { content:""; position:absolute; bottom:24px; left:25%; right:25%; border-bottom:2px solid var(--kdm-muted); }
 .kdm-survivor .kdm-children > .kdm-family-node { position:relative; padding-top:18px; }
 .kdm-survivor .kdm-children > .kdm-family-node::before { content:""; position:absolute; top:0; left:50%; height:16px; border-left:2px solid var(--kdm-muted); }
+
+/* Aligned top modules and balanced lower columns without fixed content heights. */
+.kdm-survivor .kdm-survivor-header { border-bottom:3px solid var(--sex-color,#888); }
+.kdm-survivor .kdm-paper-columns { grid-template-rows:auto 1fr; gap:12px 14px; }
+.kdm-survivor .kdm-paper-columns > .kdm-attribute-column { display:grid; grid-template-rows:subgrid; grid-row:span 2; gap:12px; }
+.kdm-survivor .kdm-paper-columns section { margin:0; }
+.kdm-survivor .kdm-column-rest { display:flex; flex-direction:column; gap:12px; }
+.kdm-survivor .kdm-column-rest > section { flex:1; }
+.kdm-survivor .kdm-hunt-xp { display:flex; flex-direction:column; justify-content:space-between; gap:12px; }
+.kdm-survivor .kdm-conditions { margin-top:12px; }
+.kdm-survivor .kdm-survival .kdm-stats label > span:first-child { white-space:nowrap; font-size:12px; }
+.kdm-survivor .kdm-proficiency-link { padding:12px 4px; text-align:center; border:1px dashed var(--kdm-border); margin:8px 0; }
+.kdm-survivor .kdm-drop-valid { outline:3px solid var(--kdm-accent); outline-offset:-3px; background:color-mix(in srgb,var(--kdm-accent) 16%,var(--kdm-panel)); }
+.kdm-survivor .kdm-gear-cell { position:relative; aspect-ratio:1; min-height:0; padding:6px; gap:0; }
+.kdm-survivor .kdm-gear-card { display:flex; flex-direction:column; align-items:center; height:100%; min-height:0; cursor:pointer; }
+.kdm-survivor .kdm-gear-card img { width:auto; height:calc(100% - 34px); max-width:100%; aspect-ratio:1; object-fit:cover; flex-shrink:1; min-height:0; }
+.kdm-survivor .kdm-gear-card > span { line-height:16px; min-height:32px; max-width:100%; text-align:center; overflow-wrap:anywhere; font-size:12px; overflow:auto; }
+.kdm-survivor .kdm-clear-gear { position:absolute; right:4px; top:4px; width:24px; min-height:24px; padding:0; opacity:0; }
+.kdm-survivor .kdm-gear-cell:hover .kdm-clear-gear, .kdm-survivor .kdm-gear-cell:focus-within .kdm-clear-gear { opacity:1; }
+.kdm-survivor .kdm-inventory-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.kdm-survivor .kdm-inventory-cards li { min-width:0; border:1px solid var(--kdm-border); padding:6px; }
+.kdm-survivor .kdm-inventory-cards a { display:flex; align-items:center; gap:6px; flex:1; min-width:0; cursor:pointer; }
+.kdm-survivor .kdm-inventory-cards img { width:32px; height:32px; object-fit:cover; }
+.kdm-survivor .kdm-inventory-cards button { padding:0 5px; }
+.kdm-survivor .tab[data-tab=specials].active { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.kdm-survivor .tab[data-tab=specials] section { margin:0; min-width:0; }
+@container (max-width:650px) {
+  .kdm-survivor .kdm-paper-columns { grid-template-columns:1fr; grid-template-rows:none; }
+  .kdm-survivor .kdm-paper-columns > .kdm-attribute-column { display:flex; grid-row:auto; }
+  .kdm-survivor .kdm-column-rest > section { flex:none; }
+  .kdm-survivor .tab[data-tab=specials].active { grid-template-columns:1fr; }
+  .kdm-survivor .kdm-inventory-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@container (max-width:420px) { .kdm-survivor .kdm-inventory-cards { grid-template-columns:1fr; } }
+@media (hover:none) { .kdm-survivor .kdm-clear-gear { opacity:1; } }

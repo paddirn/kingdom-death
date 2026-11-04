@@ -10,6 +10,7 @@
 | `scripts/rules/` | Pure, platform-independent validation and grid geometry |
 | `scripts/sheets/` | ApplicationV2 actor/item context and user actions |
 | `scripts/family/` | Pure reciprocal relationship planning, world update service and view context |
+| `scripts/inventory/` | Per-Actor queued copying, gear assignment, clearing and deletion cleanup |
 | `scripts/ui/` | Shared numeric controls, image picker/preview and draft utilities |
 | `scripts/documents/` | Proficiency Item lifecycle naming without recursive updates |
 | `scripts/campaign/` | Active settlement selection and central phase controller |
@@ -22,7 +23,7 @@ Native Actor/Item documents store all user edits. No gameplay state is stored in
 
 All types have `schemaVersion: 1` and plain-text `notes`. Survivor has `attributes`, `survival.{value,limit}`, `insanity`, `brainInjury`, `bleeding`, `huntXP`, `understanding`, `courage`, `retired`, `dead`, `knockedDown`, `locations.{head,arms,body,waist,legs}`, and `gearGrid.slot0` through `slot8`. Each location stores armor and heavy injury; all except head also store light injury. These are editable records, not automated damage resolution.
 
-Gear grid is nine keyed embedded Item IDs in fixed row-major order. Each owned item represents one physical gear copy. Duplicate names are allowed; duplicate IDs in the grid are not. Coordinates and adjacency live in pure rules, so later affinity logic can operate without sheet HTML. Gear stores four color edges; special/complex affinity patterns are deferred. Deleting equipped gear surfaces a missing reference for manual repair instead of silently remapping items.
+Gear grid is nine keyed embedded Item IDs in fixed row-major order. Each owned item represents one physical gear copy. Duplicate names are allowed; duplicate IDs in the grid are not. Coordinates and adjacency live in pure rules, so later affinity logic can operate without sheet HTML. Gear stores four color edges; special/complex affinity patterns are deferred. Inventory deletion clears equipped references; native/macro deletion has an initiating-owner cleanup hook. Legacy missing references remain visible and individually clearable.
 
 Monster stores editable level, movement, toughness, wounds (manual tally), accuracy/damage/speed/luck/evasion modifiers, and `decks.{ai,hitLocation}` UUID strings. Native Cards documents will own decks later. These references do not validate, create, draw from, or grant access to decks.
 
@@ -55,3 +56,7 @@ Enter private content through Actor/Item/Cards directories now. Native document 
 ## Additive family and proficiency fields
 
 See [family/proficiency/image architecture](family-proficiency-images.md) for new schemas, failure handling, immediate versus deferred saves and the Foundry 14.365 manual checklist. Existing data paths are not removed or migrated. Family links are world IDs; proficiency links are Item UUIDs.
+
+## Item drop routing
+
+See [Survivor UI and Item drop targets](survivor-drag-drop.md) for routing, queued mutations, failure handling and pending runtime checks. Grid operations save immediately; form submission excludes old grid snapshots. No schemas or saved paths change.

@@ -1,3 +1,5 @@
+import { receiveItem, clearGear, deleteInventoryItem } from "../inventory/operations.mjs";
+import { dropTarget, acceptsItem, oncePerDrop, installDropFeedback } from "../ui/item-drops.mjs";
 import { familyContext } from "../family/context.mjs";
 import { updateFamily } from "../family/relationships.mjs";
 import { resolveProficiency } from "../rules/proficiency.mjs";
@@ -10,8 +12,8 @@ export class SurvivorSheet extends KDMActorSheet {
   tabGroups = {primary: "attributes"};
   _draft = new Map();
   static DEFAULT_OPTIONS = {classes: ["kdm-survivor"], position: {width: 900, height: 850},
-    actions: {progress: this.progress, setProficiency: this.setProficiency, clearProficiency: this.clearProficiency,
-      openProficiency: this.openProficiency, familyApply: this.familyApply, familyClear: this.familyClear,
+    actions: {progress: this.progress, clearGear: this.clearGear, deleteItem: this.deleteItem,
+      familyApply: this.familyApply, familyClear: this.familyClear,
       openFamily: this.openFamily, actorImage: function(event,target) { if(this.isEditable) pickImage(this.actor,target.dataset.imagePath); }}};
   static progress(event, target) {
     if (!this.isEditable) return;
@@ -43,6 +45,7 @@ export class SurvivorSheet extends KDMActorSheet {
     this._rememberDraft = remember;
     this.element.addEventListener("input", remember);
     this.element.addEventListener("change", remember);
+    installDropFeedback(this);
     this.updateSexBar(this.element.querySelector?.('[name="system.sex"]')?.value ?? this.actor.system.sex);
   }
   async _processSubmitData(event, form, data, options) {
@@ -67,8 +70,7 @@ export class SurvivorSheet extends KDMActorSheet {
     const choiceGroup = (path, entries) => ({path, options: [{value: "", title: "None", description: ""}, ...entries.map(([value,title,description]) => ({value,title,description}))].map(option => ({...option, selected: (this.actor.system[path] ?? "") === option.value}))});
     return {...context, family:familyContext(this.actor,game.actors.contents),
       customTokens:Object.entries(this.actor.system.customTokens ?? {}).map(([key,token])=>({key,...token})),
-      proficiencyUuid, proficiencyName:proficiency?.name ?? (proficiencyUuid ? "Missing or inaccessible Proficiency" : "No linked Proficiency"),
-      proficiencies:(game.items?.contents ?? []).filter(i=>i.type==="proficiency" && i.testUserPermission(game.user,"OBSERVER")).map(i=>({uuid:i.uuid,name:i.name,selected:i.uuid===proficiencyUuid})),
+      proficiencyUuid, proficiencyAvailable:!!proficiency, proficiencyName:proficiency?.name ?? (proficiencyUuid ? "Missing or inaccessible Proficiency" : "No linked Proficiency"),
       survivalActions: ["dodge", "encourage", "surge", "dash", "endure"].map(key => ({key, label: key[0].toUpperCase() + key.slice(1), checked: this.actor.system.survivalActions?.[key] ?? false})),
       courageOptions: choiceGroup("courageChoice", [["stalwart","Stalwart","Can't be knocked down by brain trauma or intimidate."],["prepared","Prepared","Add Hunt XP to your roll when determining a straggler."],["matchmaker","Matchmaker","Spend 1 endeavor to trigger Intimacy story event."]]),
       understandingOptions: choiceGroup("understandingChoice", [["analyze","Analyze","Look at top AI card and return it to the top of the deck."],["explore","Explore","Add +2 to your investigate roll results."],["tinker","Tinker","+1 endeavor when a returning survivor."]]),
@@ -81,11 +83,10 @@ export class SurvivorSheet extends KDMActorSheet {
       arts: owned("fightingArt"), disorders: owned("disorder"), abilities: owned("ability"),
       attributes: Object.entries(ATTRIBUTES).map(([key,label]) => ({key,label: label.replace(" modifier", ""),value: this.actor.system.attributes[key]})),
       locations: Object.entries(LOCATIONS).map(([key,label]) => ({key,label,hasLight: key !== "head", ...this.actor.system.locations[key]})),
-      cells: gridCells(this.actor.system.gearGrid, gear).map(cell => ({...cell, number: cell.index + 1,
-        choices: gear.map(i => ({id: i.id, name: i.name, selected: i.id === cell.itemId}))}))};
+      cells: gridCells(this.actor.system.gearGrid, gear)};
   }
   updateSexBar(value) {
-    this.element.querySelector?.('.kdm-sex-bar')?.style.setProperty('--sex-color',value === "M" ? "#a8d8f0" : value === "F" ? "#efacc4" : "#888");
+    this.element.querySelector?.('.kdm-survivor-header')?.style.setProperty('--sex-color',value === "M" ? "#a8d8f0" : value === "F" ? "#efacc4" : "#888");
   }
   async linkProficiency(uuid) {
     if (!this.isEditable) return;
@@ -95,18 +96,44 @@ export class SurvivorSheet extends KDMActorSheet {
       this.render({force:false});
     } catch(error) { ui.notifications.warn(error.message); }
   }
-  static setProficiency(event,target) {
-    const selector=target.dataset.source === "select" ? '[data-proficiency-select]' : '[name="system.proficiencyUuid"]';
-    return this.linkProficiency(this.element.querySelector(selector).value.trim());
-  }
-  static clearProficiency() { return this.linkProficiency(""); }
-  static async openProficiency() {
-    try { (await resolveProficiency(this._draft.get("system.proficiencyUuid") ?? this.actor.system.proficiencyUuid))?.sheet.render({force:true}); }
-    catch(error) { ui.notifications.warn(error.message); }
-  }
   async _onDropItem(event,item) {
-    if (event.target.closest('[data-proficiency-link]')) return this.linkProficiency(item.uuid);
-    return super._onDropItem(event,item);
+    const target=dropTarget(event.target);
+    if(!target) return super._onDropItem(event,item);
+    return oncePerDrop(event,async()=>{
+      this._clearDropFeedback?.();
+      if(!this.isEditable) return;
+      if(!acceptsItem(target,item,true)) {ui.notifications.warn("This target does not accept that Item type.");return;}
+      try {
+        if(target.dataset.kdmDrop === "proficiency") return await this.linkProficiency(item.uuid);
+        return await receiveItem(this.actor,item,target.dataset.kdmDrop === "gear" ? target.dataset.slot : null);
+      } catch(error) {ui.notifications.warn(error.message);}
+    });
+  }
+  async _onDrop(event) {
+    try {
+      if(dropTarget(event.target)) {
+        if(!this.isEditable) return;
+        const data=foundry.applications.ux.TextEditor.getDragEventData(event);
+        if(data.type!=="Item") {ui.notifications.warn("Drop an Item on this target.");return;}
+      }
+      return await super._onDrop(event);
+    }
+    finally { this._clearDropFeedback?.(); }
+  }
+  static async clearGear(event,target) {
+    if(!this.isEditable) return;
+    try { await clearGear(this.actor,target.dataset.slot); }
+    catch(error) {ui.notifications.warn(error.message);}
+  }
+  static async deleteItem(event,target) {
+    if(!this.isEditable) return;
+    const item=this.actor.items.get(target.dataset.itemId);if(!item) return;
+    const yes=await foundry.applications.api.DialogV2.confirm({window:{title:"Remove item"},content:"<p>Delete this embedded item permanently? A world-directory source item, if any, is unaffected.</p>"});
+    if(yes) try {await deleteInventoryItem(this.actor,item.id);} catch(error) {ui.notifications.warn(error.message);}
+  }
+  async _onClose(options) {
+    this._dropFeedback?.abort();
+    return super._onClose(options);
   }
   async _onDropActor(event,actor) {
     const slot=event.target.closest('[data-family-slot]');
@@ -133,7 +160,11 @@ export class SurvivorSheet extends KDMActorSheet {
   }
   _processFormData(event, form, formData) {
     const data = super._processFormData(event, form, formData);
-    validateGrid(data.system.gearGrid, this.actor.items.contents);
+    // Grid assignments save immediately. Do not submit an old hidden copy over a newer drop.
+    const grid=this.actor.system?.gearGrid ?? data.system.gearGrid;
+    validateGrid(grid, this.actor.items.contents);
+    delete data.system.gearGrid;
+    if(this._draft.has("system.proficiencyUuid")) data.system.proficiencyUuid=this._draft.get("system.proficiencyUuid");
     return data;
   }
 }

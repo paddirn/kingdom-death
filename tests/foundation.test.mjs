@@ -26,6 +26,7 @@ class TypeDataModel {
   }
 }
 class Sheet {
+  async _onDropItem(event,item) { this.nativeDrop=item; return item; }
   _processFormData(event, form, formData) { return formData.object; }
   async _prepareContext() { return {}; }
   async _onRender() {}
@@ -187,17 +188,17 @@ test("refinement defaults validate and preserve old milestone fields", () => {
   }
   assert.deepEqual(Object.keys(model.ageMilestones),['age1','age2','age3','age4']);
 });
-test("refined layout places Survivor on right and retains Gear panel markup", async () => {
+test("refined layout places Hunt XP on right and retains Gear panel markup", async () => {
   game.i18n={localize:key=>key};const sheet=new SurvivorSheet();
   sheet.actor={system:defaults(SurvivorData.defineSchema()),items:{contents:[],filter:()=>[]}};
   const html=render('survivor',await sheet._prepareContext({}));
-  assert.ok(html.indexOf('<h2>Survival')<html.indexOf('<h2>Survivor'));
-  assert.ok(html.indexOf('<h2>Survivor')<html.indexOf('<h2>Weapon Proficiency'));
+  assert.ok(html.indexOf('<h2>Survival')<html.indexOf('<h2>Hunt XP'));
+  assert.ok(html.indexOf('<h2>Hunt XP')<html.indexOf('<h2>Weapon Proficiency'));
   assert.equal((html.match(/name="system.sex"/g)||[]).length,1);
   for(const key of ['dodge','encourage','surge','dash','endure']) assert.ok(html.includes(`name="system.survivalActions.${key}"`));
   for(const key of ['courageChoice','understandingChoice']) assert.equal((html.match(new RegExp(`name="system.${key}"`,'g'))||[]).length,4);
-  for(const text of ['XP 2','XP 6','XP 10','XP 15','Heavy Injury: Knocked Down (all locations)','Select Before Hunt']) assert.ok(html.includes(text));
-  assert.ok(html.includes('name="system.gearGrid.'));
+  for(const text of ['Milestones: 2 / 6 / 10 / 15','Heavy Injury: Knocked Down (all locations)']) assert.ok(html.includes(text));
+  assert.equal((html.match(/data-kdm-drop="gear"/g)||[]).length,9);
 });
 test("radio draft restores exactly one selection independently per group", async () => {
   const sheet=new SurvivorSheet();sheet.actor={system:{}};sheet.isEditable=true;
@@ -260,4 +261,55 @@ test('square controls use below-field layout while progression remains read-only
   assert.match(css,/kdm-square-numbers \.kdm-stepper input \{ grid-row:1; grid-column:1 \/ 3/);
   assert.match(css,/kdm-square-numbers \.kdm-stepper button \{ grid-row:2/);
   assert.match(css,/kdm-radio-option input\[type=radio\]::after \{ content:none/);
+});
+
+test('Hunt XP and compact Proficiency omit redundant controls while legacy schema remains',async()=>{
+  game.i18n={localize:key=>key};const sheet=new SurvivorSheet();sheet.actor={system:defaults(SurvivorData.defineSchema()),items:{contents:[],filter:()=>[]}};
+  const html=render('survivor',await sheet._prepareContext({}));
+  assert.equal((html.match(/<h2>Hunt XP<\/h2>/g)||[]).length,1);assert.ok(!html.includes('<h3>Hunt XP'));
+  for(const removed of ['name="system.ageMilestones.','name="system.weaponProficiency.type"','name="system.proficiencyUuid"','data-proficiency-select','Resolve milestones manually.','kdm-sex-bar','>Armor<input']) assert.ok(!html.includes(removed),removed);
+  const condition=html.slice(html.indexOf('class="kdm-conditions"'),html.indexOf('data-tab="gear"><'));
+  assert.ok(condition.indexOf('name="system.knockedDown"')<condition.indexOf('name="system.retired"'));
+  assert.ok(condition.indexOf('name="system.retired"')<condition.indexOf('name="system.dead"'));
+  assert.ok(html.includes('aria-label="Head armor"'));assert.ok(html.includes('<span>Survival Limit</span>'));
+  assert.equal(Object.keys(SurvivorData.defineSchema().ageMilestones.fields).length,4);
+});
+test('Proficiency renders a name-only native UUID link, placeholder or missing state',()=>{
+  const base={actor:{},system:{}};
+  const linked=render('survivor',{...base,proficiencyUuid:'Item.proficiency',proficiencyName:'Sword (specialization)',proficiencyAvailable:true});
+  assert.match(linked,/class="content-link"[^>]+data-uuid="Item.proficiency"[^>]*>Sword \(specialization\)<\/a>/);
+  assert.ok(!linked.includes('>Item.proficiency<'));
+  assert.ok(render('survivor',base).includes('Drop Proficiency Item here'));
+  assert.ok(render('survivor',{...base,proficiencyUuid:'Item.deleted'}).includes('Missing or unavailable Proficiency'));
+});
+test('Save omits immediate grid state and hidden legacy fields but persists draft UUID and Retired',()=>{
+  const sheet=new SurvivorSheet();sheet.actor={system:{gearGrid:{slot0:'live'}},items:{contents:[{id:'live',type:'gear'}]}};
+  sheet._draft.set('system.proficiencyUuid','Item.next');
+  const data=sheet._processFormData(null,null,{object:{system:{retired:true,notes:'draft'}}});
+  assert.equal(data.system.gearGrid,undefined);assert.equal(data.system.ageMilestones,undefined);assert.equal(data.system.weaponProficiency,undefined);
+  assert.equal(data.system.proficiencyUuid,'Item.next');assert.equal(data.system.retired,true);assert.equal(data.system.notes,'draft');
+});
+test('sex color updates only the existing header line and responsive layout has paired rows',()=>{
+  const sheet=new SurvivorSheet(),colors=[];sheet.element={querySelector:selector=>{assert.equal(selector,'.kdm-survivor-header');return {style:{setProperty:(key,value)=>colors.push([key,value])}};}};
+  for(const sex of ['M','F','']) sheet.updateSexBar(sex);
+  assert.deepEqual(colors.map(c=>c[1]),['#a8d8f0','#efacc4','#888']);
+  const css=fs.readFileSync(new URL('../styles/kingdom-death.css',import.meta.url),'utf8');
+  assert.match(css,/grid-template-rows:subgrid/);assert.match(css,/kdm-inventory-cards \{ display:grid; grid-template-columns:repeat\(3/);
+  assert.match(css,/tab\[data-tab=specials\]\.active \{ display:grid; grid-template-columns:repeat\(2/);
+});
+test('sheet drop routing rejects invalid and read-only targets without invoking inventory',async()=>{
+  const sheet=new SurvivorSheet();sheet.isEditable=true;let links=0,renders=0;
+  sheet.linkProficiency=async uuid=>{links++;assert.equal(uuid,'Item.p');};sheet.render=()=>renders++;
+  const warnings=[];globalThis.ui={notifications:{warn:message=>warnings.push(message)}};
+  const target={dataset:{kdmDrop:'proficiency'}},event={target:{closest:()=>target}};
+  const item={documentName:'Item',type:'proficiency',uuid:'Item.p'};
+  await Promise.all([sheet._onDropItem(event,item),sheet._onDropItem(event,item)]);assert.equal(links,1);
+  await sheet._onDropItem({target:event.target},{...item,type:'gear'});assert.equal(links,1);assert.equal(warnings.length,1);
+  sheet.isEditable=false;await sheet._onDropItem({target:event.target},item);assert.equal(links,1);assert.equal(renders,0);
+});
+
+test('untargeted Item drops retain the inherited native handler',async()=>{
+  const sheet=new SurvivorSheet(),item={documentName:'Item',type:'resource'};
+  assert.equal(await sheet._onDropItem({target:{closest:()=>null}},item),item);
+  assert.equal(sheet.nativeDrop,item);
 });
