@@ -1,7 +1,7 @@
-# v0.1.3 — Survivor default validation fix
+# v0.1.4 — Survivor refinements and numeric controls
 
-Fixes the reported Survivor Actor creation error by explicitly allowing blank Sex values while retaining empty/M/F choices. Newly added optional Survivor text fields also explicitly allow blank defaults. The shared text helper, existing data paths and stored Survivor values are preserved.
+Refines the Survivor Attributes layout, moves Sex into the header, adds requested instructions and injury icons, and preserves existing milestone data paths. Adds manually tracked Survival action checkboxes and independent Courage/Understanding radio selections with None options.
 
-Validated with 29 Node tests and 9 Python tests plus syntax, template, manifest, module-path and ZIP checks. A non-persistent real-model regression macro is provided at tools/runtime/survivor-defaults.js in the repository. Foundry 14.365 runtime execution remains pending; offline tests use API doubles and do not certify runtime validation.
+Adds shared numeric steppers across Actor and Item sheets with bounds, negative values, keyboard editing, input/change events and read-only handling. Existing tabs, drafts, gear and inventory remain intact.
 
-After updating, confirm version 0.1.3, restart/reload Foundry and create a Survivor through the normal Actor dialog.
+Validated with 35 Node and 9 Python tests plus syntax, template, manifest, module-path and ZIP checks. Targets Foundry 14.365 only. Live Foundry behavior and visual alignment remain unverified. After updating, restart/reload Forge and test controls and Save/reload behavior on an existing Survivor.
