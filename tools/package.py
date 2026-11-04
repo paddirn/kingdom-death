@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
+from check_release import check_archive
 root = Path(__file__).resolve().parent.parent
 manifest = json.loads((root / 'system.json').read_text())
 dist = root / 'dist'
@@ -18,4 +19,5 @@ with ZipFile(archive) as z:
     assert 'kingdom-death/system.json' in z.namelist()
     assert all(not n.endswith('.pdf') and '/node_modules/' not in n for n in z.namelist())
 (dist / 'system.json').write_text(json.dumps(manifest, indent=2) + '\n')
+check_archive(manifest, archive.read_bytes())
 print(f'Built and inspected {archive} ({len(files)} files)')

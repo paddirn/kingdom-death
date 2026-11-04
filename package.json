@@ -1,13 +1,13 @@
 {
   "name": "kingdom-death",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "node --test && python3 -m unittest discover -s tests -p \"test_*.py\"",
     "validate": "node tools/validate.mjs",
     "check": "npm run validate && npm test",
     "build": "npm run check && python3 tools/package.py"

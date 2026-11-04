@@ -21,7 +21,7 @@ Hooks.once("init", () => {
   game.settings.registerMenu(SYSTEM_ID, "campaign", {name: "Campaign Dashboard", label: "Open Campaign Dashboard",
     hint: "Create a Settlement Actor first. The GM selects the active settlement; participants need Observer access to view it.",
     icon: "fas fa-landmark", type: CampaignDashboard, restricted: false});
-  game.kingdomDeath = {campaign: new CampaignController(), version: "0.1.0"};
+  game.kingdomDeath = {campaign: new CampaignController(), version: game.system.version};
 });
 Hooks.once("ready", () => {
   if (game.user.isGM && game.version !== "14.365") ui.notifications.warn("Kingdom Death: Monster targets Foundry 14.365 only. This build has not been runtime verified.");

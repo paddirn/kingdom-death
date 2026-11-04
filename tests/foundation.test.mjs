@@ -19,7 +19,7 @@ globalThis.foundry = {
 };
 globalThis.Hooks = {once: (key, fn) => once.set(key, fn), on: () => {}};
 globalThis.CONFIG = {Actor: {dataModels: {}}, Item: {dataModels: {}}};
-globalThis.game = {settings: {register: (...args) => settings.push(args), registerMenu: (...args) => settings.push(args)}, actors: {contents: []}};
+globalThis.game = {system: {version: JSON.parse(fs.readFileSync(new URL("../system.json",import.meta.url))).version}, settings: {register: (...args) => settings.push(args), registerMenu: (...args) => settings.push(args)}, actors: {contents: []}};
 await import("../scripts/main.mjs");
 const { SurvivorData } = await import("../scripts/models/survivor.mjs");
 const { MonsterData } = await import("../scripts/models/monster.mjs");
@@ -37,6 +37,7 @@ test("init model and sheet registration matches manifest subtype declarations", 
   assert.deepEqual(Object.keys(CONFIG.Actor.dataModels).sort(), Object.keys(manifest.documentTypes.Actor).sort());
   assert.deepEqual(Object.keys(CONFIG.Item.dataModels).sort(), Object.keys(manifest.documentTypes.Item).sort());
   assert.equal(registered.length,4);
+  assert.equal(game.kingdomDeath.version, manifest.version);
   assert.ok(registered.every(r => r[3].makeDefault));
   assert.equal(settings.find(s => s[1] === "activeSettlement")[2].scope,"world");
 });
