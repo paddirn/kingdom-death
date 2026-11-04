@@ -66,3 +66,7 @@ See [Survivor UI and Item drop targets](survivor-drag-drop.md) for routing, queu
 `scripts/rules/survival.mjs` owns nonnegative integer normalization and the Current ≤ Limit rule. The Survivor sheet applies it live (including draft input events) and on submission. `SurvivorData._cleanData` normalizes complete pairs after field cleaning; partial updates do not inject defaults. `validateJoint` rejects invalid pairs if validation is invoked without cleaning. Normal Foundry model/document workflows therefore cannot accept an over-limit pair; intentional bypasses of client validation are not a server security boundary. Existing over-limit source pairs are normalized when loaded/cleaned, and saved through normal updates. No other Survivor fields or shared field factories change.
 
 The exact 14.365 macro/update lifecycle still needs the runtime checks in `docs/survivor-drag-drop.md`; offline tests exercise the contracts, not Foundry's implementation.
+
+## Shared Item tags and additional proficiency links
+
+See [Proficiency and keyword migration](proficiency-keywords.md). BasicItemData migrates legacy keyword strings before ArrayField validation, and ProficiencyData maps old rank values. Survivor additional links use a separate UUID array with form drafts; combined Specials are a display projection of existing embedded Item types.

@@ -43,7 +43,7 @@ for (const event of ["createActor", "updateActor", "deleteActor"]) Hooks.on(even
 
 for (const event of ["updateItem", "deleteItem"]) Hooks.on(event, item => {
   if (item.type !== "proficiency") return;
-  for (const actor of game.actors.contents) if (actor.system.proficiencyUuid === item.uuid) {
+  for (const actor of game.actors.contents) if ((actor.system.proficiencyUuid === item.uuid || actor.system.additionalProficiencies?.includes(item.uuid))) {
     for (const app of Object.values(actor.apps)) if (app.rendered) app.render({force:false});
   }
 });

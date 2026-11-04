@@ -183,3 +183,7 @@
   .kdm-survivor .kdm-survivor-header > label:first-child { grid-column:1 / -1; }
   .kdm-survivor .kdm-header-sex { max-width:160px; }
 }
+
+.kingdom-death .kdm-radio-group[aria-label="Rank"] {display:flex;flex-direction:row;gap:1rem;}
+.kdm-additional-proficiencies {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;}
+.kdm-survivor .tab[data-tab=specials] > section:last-child {grid-column:1 / -1;}

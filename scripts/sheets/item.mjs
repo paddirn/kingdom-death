@@ -6,6 +6,7 @@ const { api, sheets } = foundry.applications;
 export class KDMItemSheet extends api.HandlebarsApplicationMixin(sheets.ItemSheetV2) {
   _draft = new Map();
   _tags = null;
+  _keywordEntry = "";
   static DEFAULT_OPTIONS = {classes: ["kingdom-death", "kdm-sheet"], tag: "form",
     actions: {pickImage: function() { if (this.isEditable) pickImage(this.item); }, previewImage: function() { previewImage(this.item); },
       addKeyword: this.addKeyword, removeKeyword: this.removeKeyword},
@@ -15,11 +16,14 @@ export class KDMItemSheet extends api.HandlebarsApplicationMixin(sheets.ItemShee
     await super._onRender(context, options);
     enhanceNumbers(this.element, this.isEditable, this.item.system);
     restoreDraft(this.element, this._draft);
+    const keywordInput=this.element.querySelector("[data-keyword-entry]");
+    if(keywordInput) keywordInput.value=this._keywordEntry;
     this._listeners?.abort();
     this._listeners = new this.element.ownerDocument.defaultView.AbortController();
     const signal = this._listeners.signal;
     const change = event => {
       if (!this.isEditable) return;
+      if(event.target.matches?.("[data-keyword-entry]")) this._keywordEntry=event.target.value;
       rememberDraft(this._draft,event.target);
       if (this.item.type === "proficiency") {
         const type=this.element.querySelector('[name="system.type"]')?.value;
@@ -31,16 +35,16 @@ export class KDMItemSheet extends api.HandlebarsApplicationMixin(sheets.ItemShee
     for (const type of ["input","change"]) this.element.addEventListener(type,change,{signal});
     this.element.addEventListener("keydown",event=> {
       if (event.key === "Enter" && event.target.matches('[data-keyword-entry]')) {
-        event.preventDefault(); KDMItemSheet.addKeyword.call(this);
+        event.preventDefault(); event.stopPropagation(); KDMItemSheet.addKeyword.call(this);
       }
-    },{signal});
+    },{signal,capture:true});
   }
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
     return {...context, item: this.item, system: this.item.system, editable: this.isEditable,
       tags: this._tags ?? this.item.system.keywords,
       isProficiency: this.item.type === "proficiency",
-      ranks: ["specialization","mastery"].map(value=>({value,label:value === "mastery" ? "Mastery" : "Specialization",selected:this.item.system.rank === value})),
+      ranks: ["none","specialist","master"].map(value=>({value,label:value[0].toUpperCase()+value.slice(1),selected:this.item.system.rank === value})),
       isGear: this.item.type === "gear", isResource: this.item.type === "resource",
       sides: this.item.type === "gear" ? Object.entries(this.item.system.affinities).map(([side,color]) => ({side,
         colors: ["none","red","green","blue"].map(value => ({value, selected: value === color}))})) : []};
@@ -49,6 +53,7 @@ export class KDMItemSheet extends api.HandlebarsApplicationMixin(sheets.ItemShee
     if (!this.isEditable) return;
     const input=this.element.querySelector('[data-keyword-entry]');
     this._tags=keywords([...(this._tags ?? this.item.system.keywords),input.value]);
+    this._keywordEntry="";
     this.render({force:false});
   }
   static removeKeyword(event,target) {
@@ -58,8 +63,8 @@ export class KDMItemSheet extends api.HandlebarsApplicationMixin(sheets.ItemShee
   }
   _processFormData(event,form,formData) {
     const data=super._processFormData(event,form,formData);
+    data.system.keywords=keywords(this._tags ?? this.item.system.keywords);
     if (this.item.type === "proficiency") {
-      data.system.keywords=keywords(this._tags ?? this.item.system.keywords);
       data.name=proficiencyName(data.system.type,data.system.rank);
     }
     return data;

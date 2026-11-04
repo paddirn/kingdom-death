@@ -3,6 +3,8 @@ export function dropTarget(element) { return element?.closest?.('[data-kdm-drop]
 export function acceptsItem(target,item,editable) {
   if(!editable || !target || item?.documentName!=="Item") return false;
   const type=target.dataset.kdmDrop;
+  if(type==="additionalProficiency") return item.type==="proficiency";
+  if(type==="specials") return ["fightingArt","ability"].includes(item.type);
   return type==="inventory" || (type==="gear" ? item.type==="gear" : item.type===type);
 }
 const handled = new WeakMap();

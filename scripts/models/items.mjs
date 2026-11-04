@@ -1,6 +1,12 @@
+import {keywords, proficiencyRank} from "../rules/proficiency.mjs";
 import { fields, common, schema, count, text, number } from "./fields.mjs";
 export class BasicItemData extends foundry.abstract.TypeDataModel {
-  static defineSchema() { return {...common(), source: text(), keywords: text()}; }
+  static migrateData(source) {
+    source=super.migrateData(source);
+    if (Object.hasOwn(source,'keywords')) source.keywords=keywords(source.keywords);
+    return source;
+  }
+  static defineSchema() { return {...common(), source: text(), keywords: new fields.ArrayField(text({blank:false}), {initial:[]})}; }
 }
 export class ResourceData extends BasicItemData {
   static defineSchema() { return {...super.defineSchema(), quantity: count(1)}; }
@@ -13,9 +19,14 @@ export class GearData extends BasicItemData {
   }
 }
 export class ProficiencyData extends BasicItemData {
+  static migrateData(source) {
+    source=super.migrateData(source);
+    if (Object.hasOwn(source,'rank')) source.rank=proficiencyRank(source.rank);
+    return source;
+  }
   static defineSchema() {
     return {...super.defineSchema(), type: text({blank:true}),
-      rank: text({initial:"specialization", choices:["specialization","mastery"]}),
+      rank: text({initial:"specialist", choices:["none","specialist","master"]}),
       keywords: new fields.ArrayField(text({blank:false}), {initial:[]}), description: text({blank:true})};
   }
 }

@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {proficiencyName,keywords,resolveProficiency} from '../scripts/rules/proficiency.mjs';
 import {saveImage,pickImage,previewImage} from '../scripts/ui/images.mjs';
 test('proficiency names are valid with blank Type and correctly follow Rank',()=>{
-  assert.equal(proficiencyName(' Sword ','specialization'),'Sword (specialization)');
-  assert.equal(proficiencyName('Sword','mastery'),'Sword (mastery)');assert.equal(proficiencyName(''),'Proficiency (specialization)');
+  assert.equal(proficiencyName(' Sword ','specialization'),'Sword (specialist)');
+  assert.equal(proficiencyName('Sword','mastery'),'Sword (master)');assert.equal(proficiencyName(''),'Proficiency (specialist)');
 });
 test('keywords trim, deduplicate without losing first capitalization, remove and round-trip',()=>{
   const tags=keywords([' Sharp ','sharp','', 'Blade','Blade']);assert.deepEqual(tags,['Sharp','Blade']);
@@ -33,8 +33,21 @@ test('document lifecycle derives names without a second update and preserves ide
   const expandObject=data=>Object.fromEntries(Object.entries(data).map(([k,v])=>[k,v]));
   globalThis.foundry={documents:{Item:BaseItem},utils:{expandObject}};
   const {KDMItem}=await import('../scripts/documents/item.mjs');const item=new KDMItem();item.id='stable';item.uuid='Item.stable';item.type='proficiency';item.system={type:'Sword',rank:'specialization',keywords:['sharp',' sharp ']};
-  await item._preCreate({}, {}, {});assert.equal(item.source.name,'Sword (specialization)');assert.deepEqual(item.source['system.keywords'],['sharp']);
+  await item._preCreate({}, {}, {});assert.equal(item.source.name,'Sword (specialist)');assert.deepEqual(item.source['system.keywords'],['sharp']);
   const changes={system:{type:'Axe',rank:'mastery',keywords:[' Edge ','edge']}};await item._preUpdate(changes,{},{});
-  assert.equal(changes.name,'Axe (mastery)');assert.deepEqual(changes.system.keywords,['Edge']);assert.equal(item.uuid,'Item.stable');
+  assert.equal(changes.name,'Axe (master)');assert.deepEqual(changes.system.keywords,['Edge']);assert.equal(item.uuid,'Item.stable');
   item.type='gear';const original={name:'Original'};await item._preUpdate(original,{},{});assert.deepEqual(original,{name:'Original'});
+});
+
+test('None, Specialist and Master names and blank-safe defaults',()=>{
+  assert.equal(proficiencyName('Sword','none'),'Sword');assert.equal(proficiencyName('Sword','specialist'),'Sword (specialist)');assert.equal(proficiencyName('Sword','master'),'Sword (master)');assert.equal(proficiencyName('','none'),'Proficiency');
+});
+test('additional proficiency and combined Specials filters accept only matching types',async()=>{
+  const {acceptsItem}=await import('../scripts/ui/item-drops.mjs');
+  for(const type of ['gear','proficiency','ability','fightingArt','disorder']) {
+    const item={documentName:'Item',type};
+    assert.equal(acceptsItem({dataset:{kdmDrop:'additionalProficiency'}},item,true),type==='proficiency');
+    assert.equal(acceptsItem({dataset:{kdmDrop:'specials'}},item,true),['ability','fightingArt'].includes(type));
+    assert.equal(acceptsItem({dataset:{kdmDrop:'specials'}},item,false),false);
+  }
 });
