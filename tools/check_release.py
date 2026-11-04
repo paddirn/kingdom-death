@@ -27,7 +27,7 @@ def check_manifest(manifest):
     require(manifest.get('manifest') == f'{BASE}/latest/download/system.json', 'Unexpected update manifest URL')
     require(manifest.get('download') == f'{BASE}/download/v{version}/kingdom-death-{version}.zip', 'Download URL/version mismatch')
     require(set(manifest.get('documentTypes', {}).get('Actor', {})) == {'survivor','monster','settlement'}, 'Actor types missing')
-    require(set(manifest.get('documentTypes', {}).get('Item', {})) == {'gear','resource','ability','disorder','fightingArt','innovation','settlementLocation'}, 'Item types missing')
+    require(set(manifest.get('documentTypes', {}).get('Item', {})) == {'gear','resource','ability','disorder','fightingArt','innovation','settlementLocation','proficiency'}, 'Item types missing')
     require(not manifest.get('relationships', {}).get('requires'), 'Unexpected required package dependency')
     require(not manifest.get('relationships', {}).get('recommends'), 'Unexpected recommended dependency')
     require(bool(manifest.get('esmodules')), 'Missing system entry module')

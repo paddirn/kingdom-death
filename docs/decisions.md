@@ -23,3 +23,11 @@
 - https://forums.forge-vtt.com/t/how-to-upload-a-modified-version-of-a-module-system/10510
 
 Consulted November 3, 2026. Published API documentation is evidence for conventions, not proof of target-build execution.
+
+## Family, proficiency and images
+
+- Keep existing proficiency Type text/XP unchanged; add an optional UUID for typed Items. New Proficiency keywords are an array without changing existing Item keyword schemas.
+- Derive Proficiency names in a native Item subclass before persistence; never recursively update after a rename.
+- Family nodes reference world Actor IDs and resolve live images/names. Reciprocal edits use a pure plan, ownership preflight and one native batch, with explicit interruption warnings. Cross-client transaction/locking is not claimed. A GM uses the same UI when a player lacks ownership.
+- Shared FilePicker/ImagePopout helpers use native image paths; avatar/prototype token changes are independent and immediate.
+- Preserve all form drafts across document rerenders; family/image controls are separate immediate actions. See the new feature checklist for pending runtime verification.

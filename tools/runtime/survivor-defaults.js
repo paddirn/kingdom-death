@@ -15,3 +15,10 @@ for (const sex of [undefined, "", "M", "F"]) {
   }
 }
 ui.notifications.info("Survivor default construction and validation passed on Foundry 14.365.");
+const fresh = new Model({}, {parent: new foundry.documents.Actor({name:"New fields",type:"survivor"})});
+if (fresh.proficiencyUuid !== "" || fresh.family.children.length || fresh.family.parents.parent1 !== "") throw new Error("Reference defaults invalid");
+if (Object.values(fresh.customTokens).some(t=>t.label !== "_ tokens" || t.value !== 0)) throw new Error("Token defaults invalid");
+const proficiency = new CONFIG.Item.documentClass({name:"Proficiency",type:"proficiency"});
+if (proficiency.validate({strict:true}) === false || proficiency.system.invalid) throw new Error("Proficiency default validation failed");
+if (proficiency.system.type !== "" || proficiency.system.rank !== "specialization" || proficiency.system.keywords.length) throw new Error("Proficiency defaults changed");
+ui.notifications.info("Family, token and Proficiency defaults passed on Foundry 14.365.");

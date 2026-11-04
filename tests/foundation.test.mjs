@@ -4,6 +4,7 @@ import fs from "node:fs";
 import Handlebars from "handlebars";
 // Structural test double only: not a Foundry implementation or validation test.
 class Field { constructor(options = {}) { this.options = options; } }
+class ArrayField extends Field { constructor(element, options) { super(options); this.element=element; } }
 class Schema extends Field { constructor(fields) { super(); this.fields = fields; } }
 class TypeDataModel {
   constructor(data = {}) { Object.assign(this, defaults(this.constructor.defineSchema()), data); }
@@ -32,7 +33,7 @@ class Sheet {
 }
 const registered = [], once = new Map(), settings = [];
 globalThis.foundry = {
-  data: {fields: {NumberField: Field, StringField: Field, BooleanField: Field, SchemaField: Schema}},
+  data: {fields: {ArrayField, NumberField: Field, StringField: Field, BooleanField: Field, SchemaField: Schema}},
   abstract: {TypeDataModel}, documents: {Actor: class Actor {}, Item: class Item {}},
   applications: {api: {HandlebarsApplicationMixin: Base => Base, ApplicationV2: Sheet},
     sheets: {ActorSheetV2: Sheet, ItemSheetV2: Sheet}, apps: {DocumentSheetConfig: {registerSheet: (...args) => registered.push(args)}}}
@@ -207,4 +208,56 @@ test("radio draft restores exactly one selection independently per group", async
   assert.equal(inputs[0].checked,false);assert.equal(inputs[1].checked,true);assert.equal(inputs[2].checked,true);
   handlers.change({target:{name:'system.courageChoice',type:'radio',value:'',checked:true}});
   assert.equal(sheet._draft.get('system.courageChoice'),'');
+});
+
+test('additive Survivor and Proficiency defaults validate and survive serialization',()=>{
+  const survivor=new SurvivorData(), proficiency=new itemModels.proficiency();
+  assert.equal(survivor.validate(),true);assert.equal(proficiency.validate(),true);
+  assert.equal(survivor.proficiencyUuid,'');assert.deepEqual(survivor.family,{parents:{parent1:'',parent2:''},children:[]});
+  assert.equal(Object.keys(survivor.customTokens).length,5);assert.deepEqual(survivor.customTokens.token1,{label:'_ tokens',value:0});
+  assert.equal(proficiency.type,'');assert.equal(proficiency.rank,'specialization');assert.deepEqual(proficiency.keywords,[]);assert.equal(proficiency.description,'');
+  const saved=JSON.parse(JSON.stringify({...survivor,proficiencyUuid:'Item.x',family:{parents:{parent1:'a',parent2:''},children:['b']},customTokens:{...survivor.customTokens,token1:{label:'Pain',value:2}}}));
+  assert.equal(new SurvivorData(saved).validate(),true);assert.equal(saved.customTokens.token1.value,2);
+  assert.equal(new itemModels.proficiency({keywords:['Sharp'],description:'first\nsecond'}).validate(),true);
+});
+test('all five tabs, read-only progress totals and full-width counters render',async()=>{
+  game.i18n={localize:key=>key};const sheet=new SurvivorSheet();sheet.actor={id:'self',system:defaults(SurvivorData.defineSchema()),items:{contents:[],filter:()=>[]}};
+  const context=await sheet._prepareContext({}),html=render('survivor',context);
+  assert.deepEqual(SurvivorSheet.TABS.primary.tabs.map(t=>t.id),['attributes','gear','specials','family','image']);
+  for(const path of ['huntXP','weaponProficiency.value','courage','understanding']) assert.ok(html.includes(`readonly min="0" step="1" name="system.${path}"`));
+  for(let i=1;i<=5;i++) assert.ok(html.includes(`name="system.customTokens.token${i}.value"`));
+  assert.ok(html.includes('>Male</option>'));assert.ok(html.includes('>Female</option>'));assert.ok(html.includes('value="" selected>Unspecified'));
+  assert.match(html, /<\/div><\/div>\s*<section class="kdm-conditions">/);
+  assert.ok(html.includes('data-image-path="img"'));assert.ok(html.includes('data-image-path="prototypeToken.texture.src"'));
+});
+test('progress actions immediately synchronize one authoritative total and track',()=>{
+  const sheet=new SurvivorSheet();sheet.isEditable=true;const input={value:'0',dispatchEvent:event=>assert.equal(event.type,'input')};
+  const boxes=[1,2,3,4].map(value=>({dataset:{value:String(value)}}));sheet.element={querySelector:()=>input,querySelectorAll:()=>boxes};
+  SurvivorSheet.progress.call(sheet,null,{dataset:{path:'system.huntXP',value:'3'}});assert.equal(Number(input.value),3);assert.deepEqual(boxes.map(b=>b.checked),[true,true,true,false]);
+  SurvivorSheet.progress.call(sheet,null,{dataset:{path:'system.huntXP',value:'3'}});assert.equal(Number(input.value),2);
+  sheet.isEditable=false;SurvivorSheet.progress.call(sheet,null,{dataset:{value:'4'}});assert.equal(Number(input.value),2);
+});
+test('new family and image tabs preserve dirty fields and selection during rerender',async()=>{
+  const sheet=new SurvivorSheet();sheet.isEditable=true;sheet.actor={system:{}};sheet.tabGroups.primary='family';
+  const inputs=[{name:'system.notes',value:'server'},{name:'system.proficiencyUuid',value:''}];sheet._draft.set('system.notes','unsaved');sheet._draft.set('system.proficiencyUuid','Item.x');
+  sheet.element={querySelectorAll:s=>s==='[name]'?inputs:[],addEventListener:()=>{}};
+  await sheet._onRender({},{});assert.equal(inputs[0].value,'unsaved');assert.equal(inputs[1].value,'Item.x');assert.equal(sheet.tabGroups.primary,'family');
+});
+test('Item proficiency form submits structured tags and derived name',async()=>{
+  const {KDMItemSheet}=await import('../scripts/sheets/item.mjs');const sheet=new KDMItemSheet();sheet.item={type:'proficiency',system:{keywords:['old']}};sheet._tags=[' New ','new','Second'];
+  const data=sheet._processFormData(null,null,{object:{name:'wrong',system:{type:'Sword',rank:'mastery',description:'a\nb'}}});
+  assert.deepEqual(data.system.keywords,['New','Second']);assert.equal(data.name,'Sword (mastery)');assert.equal(data.system.description,'a\nb');
+});
+test('family dead overlay and Item preview are rendered independently of edit controls',()=>{
+  const html=render('survivor',{actor:{},system:{},editable:false,family:{current:{available:true,id:'x',img:'x.png',name:'Dead',dead:true}}});
+  assert.match(html,/class="kdm-dead" aria-label="Dead"/);
+  const item=render('item',{item:{name:'Card',img:'card.png'},system:{},editable:false});
+  assert.ok(item.indexOf('data-action="previewImage"')<item.indexOf('<fieldset disabled>'));
+  assert.match(item,/aria-label="Choose Item image" disabled/);
+});
+test('square controls use below-field layout while progression remains read-only',()=>{
+  const css=fs.readFileSync(new URL('../styles/kingdom-death.css',import.meta.url),'utf8');
+  assert.match(css,/kdm-square-numbers \.kdm-stepper input \{ grid-row:1; grid-column:1 \/ 3/);
+  assert.match(css,/kdm-square-numbers \.kdm-stepper button \{ grid-row:2/);
+  assert.match(css,/kdm-radio-option input\[type=radio\]::after \{ content:none/);
 });

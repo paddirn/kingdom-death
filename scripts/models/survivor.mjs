@@ -1,8 +1,11 @@
 import { ATTRIBUTES, LOCATIONS, SLOTS } from "../rules/constants.mjs";
-import { common, schema, count, number, bool, slots, text } from "./fields.mjs";
+import { fields, common, schema, count, number, bool, slots, text } from "./fields.mjs";
 export class SurvivorData extends foundry.abstract.TypeDataModel {
   static defineSchema() {
-    return {...common(), survivalActions: schema({dodge: bool(), encourage: bool(), surge: bool(), dash: bool(), endure: bool()}),
+    return {...common(),
+      proficiencyUuid: text({blank: true}),
+      family: schema({parents: schema({parent1: text({blank:true}), parent2: text({blank:true})}), children: new fields.ArrayField(text({blank:false}), {initial: []})}),
+      customTokens: schema(Object.fromEntries(Array.from({length:5}, (_,i)=>[`token${i+1}`, schema({label:text({blank:true,initial:"_ tokens"}),value:count()})]))), survivalActions: schema({dodge: bool(), encourage: bool(), surge: bool(), dash: bool(), endure: bool()}),
       courageChoice: text({blank: true, choices: ["", "stalwart", "prepared", "matchmaker"]}),
       understandingChoice: text({blank: true, choices: ["", "analyze", "explore", "tinker"]}), sex: text({blank: true, choices: ["", "M", "F"]}), cannotSpendSurvival: bool(), cannotUseFightingArts: bool(),
       impairments: text({blank: true}), skipNextHunt: bool(), oncePerLifetime: text({blank: true}), rerollUsed: bool(),

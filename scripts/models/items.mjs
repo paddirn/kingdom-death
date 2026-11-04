@@ -12,5 +12,12 @@ export class GearData extends BasicItemData {
         new fields.StringField({required: true, initial: "none", choices: ["none", "red", "green", "blue"]})])))};
   }
 }
-export const itemModels = {gear: GearData, resource: ResourceData, fightingArt: BasicItemData,
+export class ProficiencyData extends BasicItemData {
+  static defineSchema() {
+    return {...super.defineSchema(), type: text({blank:true}),
+      rank: text({initial:"specialization", choices:["specialization","mastery"]}),
+      keywords: new fields.ArrayField(text({blank:false}), {initial:[]}), description: text({blank:true})};
+  }
+}
+export const itemModels = {proficiency: ProficiencyData, gear: GearData, resource: ResourceData, fightingArt: BasicItemData,
   disorder: BasicItemData, ability: BasicItemData, innovation: BasicItemData, settlementLocation: BasicItemData};

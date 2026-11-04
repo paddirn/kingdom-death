@@ -64,3 +64,5 @@ See [architecture](docs/architecture.md), [decisions](docs/decisions.md), [devel
 ## Survivor sheet
 
 The Survivor sheet uses Attributes, Gear and Specials tabs with editable printed-sheet organization. See [Survivor redesign](docs/survivor-sheet.md) for new fields, draft handling, manual milestones and the 14.365 runtime acceptance checklist.
+
+Survivor Family and Image tabs, Proficiency Items and the associated manual acceptance checklist are documented in [Family, Proficiency and images](docs/family-proficiency-images.md). These feature changes require runtime validation on Foundry 14.365; release publication remains a separate step.

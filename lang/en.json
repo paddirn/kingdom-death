@@ -12,7 +12,8 @@
       "disorder": "Disorder",
       "ability": "Ability",
       "innovation": "Innovation",
-      "settlementLocation": "Settlement Location"
+      "settlementLocation": "Settlement Location",
+      "proficiency": "Proficiency"
     }
   }
 }
