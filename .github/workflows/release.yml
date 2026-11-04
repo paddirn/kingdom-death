@@ -29,7 +29,7 @@ jobs:
           python-version: '3.x'
       - name: Validate requested version
         env:
-          RELEASE_VERSION: ${{ inputs.version || '0.1.5' }}
+          RELEASE_VERSION: ${{ inputs.version || '0.1.6' }}
         run: |
           node -e 'const v=process.env.RELEASE_VERSION; if(!/^\d+\.\d+\.\d+$/.test(v)||require("./system.json").version!==v)process.exit(1)'
       - run: npm ci
@@ -38,7 +38,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_VERSION: ${{ inputs.version || '0.1.5' }}
+          RELEASE_VERSION: ${{ inputs.version || '0.1.6' }}
         run: |
           set -euo pipefail
           tag="v$RELEASE_VERSION"
@@ -54,5 +54,5 @@ jobs:
           gh release edit "$tag" --draft=false --latest
       - name: Verify public manifest and its actual download URL
         env:
-          RELEASE_VERSION: ${{ inputs.version || '0.1.5' }}
+          RELEASE_VERSION: ${{ inputs.version || '0.1.6' }}
         run: python3 tools/check_release.py "https://github.com/paddirn/kingdom-death/releases/download/v$RELEASE_VERSION/system.json"
