@@ -1,3 +1,4 @@
+import { KDMItem } from "./documents/item.mjs";
 import { SYSTEM_ID } from "./rules/constants.mjs";
 import { SurvivorData } from "./models/survivor.mjs";
 import { MonsterData } from "./models/monster.mjs";
@@ -10,6 +11,7 @@ import { KDMItemSheet } from "./sheets/item.mjs";
 import { CampaignController } from "./campaign/controller.mjs";
 import { CampaignDashboard } from "./campaign/dashboard.mjs";
 Hooks.once("init", () => {
+  CONFIG.Item.documentClass = KDMItem;
   Object.assign(CONFIG.Actor.dataModels, {survivor: SurvivorData, monster: MonsterData, settlement: SettlementData});
   Object.assign(CONFIG.Item.dataModels, itemModels);
   const registry = foundry.applications.apps.DocumentSheetConfig;
@@ -29,7 +31,14 @@ Hooks.once("ready", () => {
 // Native document sheets refresh their own Actors and embedded Items. Refresh
 // settlement selectors when a world Actor is added, renamed, or removed.
 for (const event of ["createActor", "updateActor", "deleteActor"]) Hooks.on(event, actor => {
-  for (const settlement of game.actors.filter(a => a.type === "settlement" && a.id !== actor.id)) {
+  for (const settlement of game.actors.filter(a => ["settlement", "survivor"].includes(a.type) && a.id !== actor.id)) {
     for (const app of Object.values(settlement.apps)) if (app.rendered) app.render({force: false});
+  }
+});
+
+for (const event of ["updateItem", "deleteItem"]) Hooks.on(event, item => {
+  if (item.type !== "proficiency") return;
+  for (const actor of game.actors.contents) if (actor.system.proficiencyUuid === item.uuid) {
+    for (const app of Object.values(actor.apps)) if (app.rendered) app.render({force:false});
   }
 });

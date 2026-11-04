@@ -9,6 +9,9 @@
 | `scripts/models/` | Foundry TypeDataModel schemas and field defaults |
 | `scripts/rules/` | Pure, platform-independent validation and grid geometry |
 | `scripts/sheets/` | ApplicationV2 actor/item context and user actions |
+| `scripts/family/` | Pure reciprocal relationship planning, world update service and view context |
+| `scripts/ui/` | Shared numeric controls, image picker/preview and draft utilities |
+| `scripts/documents/` | Proficiency Item lifecycle naming without recursive updates |
 | `scripts/campaign/` | Active settlement selection and central phase controller |
 | `templates/`, `styles/`, `lang/` | Escaped Handlebars views, scoped CSS, type labels |
 | `tools/`, `tests/` | Static validation, allowlisted packaging, offline checks |
@@ -25,11 +28,11 @@ Monster stores editable level, movement, toughness, wounds (manual tally), accur
 
 Settlement stores lanternYear, population, endeavors, survivalLimit, and campaign `{phase, party, quarryId, hunt, showdownSceneId}`. Party is four keyed world Actor IDs. Hunt positions are nonnegative manual coordinates without a defined track length. Population is independent of created survivor records. Scene ID is only a reference and is not activated automatically.
 
-Inventory uses native embedded Items. Gear adds attack profile and affinities; Resource adds nonnegative integer quantity. Other Item types provide source, keywords, notes. Core keeps no hardcoded content lists. Individual survival limits remain manual and are not forced to the settlement limit.
+Inventory uses native embedded Items. Gear adds attack profile and affinities; Resource adds nonnegative integer quantity. Proficiency Items add Type/Rank, generated names, structured keyword tags and description; other Item types retain source, free-text keywords and notes. Core keeps no hardcoded content lists. Individual survival limits remain manual and are not forced to the settlement limit.
 
 ## Permissions and concurrency
 
-Native document ownership protects mutations. The controller checks ownership too. GM selects active settlement; Observers can view and Owners can edit it. Creating a settlement does not auto-grant permissions. The shared dashboard refreshes via native document sheets and world Actor selector hooks. Foundry performs synchronization; no custom socket authority or permission escalation exists. Whole-form Save is explicit; no collaboration lock or conflict resolution beyond Foundry's last-write behavior is implemented. Coordinate simultaneous editing of the same record. Draft edits are not persisted until Save and may be replaced by an incoming document refresh.
+Native document ownership protects mutations. The controller checks ownership too. GM selects active settlement; Observers can view and Owners can edit it. Creating a settlement does not auto-grant permissions. The shared dashboard refreshes via native document sheets and world Actor selector hooks. Foundry performs synchronization; no custom socket authority or permission escalation exists. Whole-form Save is explicit; no collaboration lock or conflict resolution beyond Foundry's last-write behavior is implemented. Coordinate simultaneous editing of the same record. Survivor and Item form drafts survive document-driven rerenders until Save; closing the sheet loses unsaved edits. Family and image actions make narrow immediate updates.
 
 Grid/party validation runs on custom form submission. Pure helpers are also available to future services. This is not a server-side uniqueness constraint: direct macros/imports may create stale or duplicate references, which are surfaced/rejected on subsequent sheet save. Foundry field validation governs scalar types/ranges. Never regard client validation as an authorization boundary.
 
@@ -48,3 +51,7 @@ Add schema fields on Settlement, pure operations under `rules`, then controller 
 ## Content and future packs
 
 Enter private content through Actor/Item/Cards directories now. Native document export/import is available; no proprietary importer is bundled. Future authorized content should use separate Foundry modules with compendium packs (`Actor`, `Item`, `Cards`, `RollTable`, `Scene`, etc.) declaring the `kingdom-death` system dependency, or append pack entries to the system manifest for distributable original content. Follow Foundry's V14 compendium tooling; do not ship raw JSON as if it were a compiled pack. Import content into a world before referencing world IDs. Keep UUID mapping/import remapping in an importer service. Game modules may provide typed records without altering the core engine; bespoke effects should use an explicit future resolver registry and manual fallbacks, not executable code in card text.
+
+## Additive family and proficiency fields
+
+See [family/proficiency/image architecture](family-proficiency-images.md) for new schemas, failure handling, immediate versus deferred saves and the Foundry 14.365 manual checklist. Existing data paths are not removed or migrated. Family links are world IDs; proficiency links are Item UUIDs.
