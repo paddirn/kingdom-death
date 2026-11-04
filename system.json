@@ -1,0 +1,52 @@
+{
+  "id": "kingdom-death",
+  "title": "Kingdom Death: Monster",
+  "description": "Unofficial content-free system foundation. Targets Foundry 14.365; runtime verification pending.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "14.365",
+    "maximum": "14.365"
+  },
+  "authors": [
+    {
+      "name": "paddirn"
+    }
+  ],
+  "esmodules": [
+    "scripts/main.mjs"
+  ],
+  "styles": [
+    "styles/kingdom-death.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "documentTypes": {
+    "Actor": {
+      "survivor": {},
+      "monster": {},
+      "settlement": {}
+    },
+    "Item": {
+      "gear": {},
+      "resource": {},
+      "fightingArt": {},
+      "disorder": {},
+      "ability": {},
+      "innovation": {},
+      "settlementLocation": {}
+    }
+  },
+  "packs": [],
+  "grid": {
+    "type": 1,
+    "distance": 1,
+    "units": "spaces"
+  },
+  "url": "https://github.com/paddirn/kingdom-death",
+  "bugs": "https://github.com/paddirn/kingdom-death/issues"
+}

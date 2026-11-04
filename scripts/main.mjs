@@ -1,0 +1,35 @@
+import { SYSTEM_ID } from "./rules/constants.mjs";
+import { SurvivorData } from "./models/survivor.mjs";
+import { MonsterData } from "./models/monster.mjs";
+import { SettlementData } from "./models/settlement.mjs";
+import { itemModels } from "./models/items.mjs";
+import { SurvivorSheet } from "./sheets/survivor.mjs";
+import { MonsterSheet } from "./sheets/monster.mjs";
+import { SettlementSheet } from "./sheets/settlement.mjs";
+import { KDMItemSheet } from "./sheets/item.mjs";
+import { CampaignController } from "./campaign/controller.mjs";
+import { CampaignDashboard } from "./campaign/dashboard.mjs";
+Hooks.once("init", () => {
+  Object.assign(CONFIG.Actor.dataModels, {survivor: SurvivorData, monster: MonsterData, settlement: SettlementData});
+  Object.assign(CONFIG.Item.dataModels, itemModels);
+  const registry = foundry.applications.apps.DocumentSheetConfig;
+  for (const [type, cls] of Object.entries({survivor: SurvivorSheet, monster: MonsterSheet, settlement: SettlementSheet})) {
+    registry.registerSheet(foundry.documents.Actor, SYSTEM_ID, cls, {types: [type], makeDefault: true, label: `TYPES.Actor.${type}`});
+  }
+  registry.registerSheet(foundry.documents.Item, SYSTEM_ID, KDMItemSheet, {types: Object.keys(itemModels), makeDefault: true, label: "Kingdom Death: Monster"});
+  game.settings.register(SYSTEM_ID, "activeSettlement", {scope: "world", config: false, type: String, default: ""});
+  game.settings.registerMenu(SYSTEM_ID, "campaign", {name: "Campaign Dashboard", label: "Open Campaign Dashboard",
+    hint: "Create a Settlement Actor first. The GM selects the active settlement; participants need Observer access to view it.",
+    icon: "fas fa-landmark", type: CampaignDashboard, restricted: false});
+  game.kingdomDeath = {campaign: new CampaignController(), version: "0.1.0"};
+});
+Hooks.once("ready", () => {
+  if (game.user.isGM && game.version !== "14.365") ui.notifications.warn("Kingdom Death: Monster targets Foundry 14.365 only. This build has not been runtime verified.");
+});
+// Native document sheets refresh their own Actors and embedded Items. Refresh
+// settlement selectors when a world Actor is added, renamed, or removed.
+for (const event of ["createActor", "updateActor", "deleteActor"]) Hooks.on(event, actor => {
+  for (const settlement of game.actors.filter(a => a.type === "settlement" && a.id !== actor.id)) {
+    for (const app of Object.values(settlement.apps)) if (app.rendered) app.render({force: false});
+  }
+});

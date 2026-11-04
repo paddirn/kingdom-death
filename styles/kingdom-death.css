@@ -1,0 +1,34 @@
+.kingdom-death { --kdm-bg: #17191c; --kdm-panel: #24272b; --kdm-ink: #eee8dc; --kdm-muted: #c0b9ab; --kdm-border: #615646; --kdm-accent: #d6b878; color: var(--kdm-ink); }
+.kingdom-death .window-content { background: var(--kdm-bg); color: var(--kdm-ink); overflow-y: auto; }
+.kingdom-death .kdm-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.kingdom-death fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.kingdom-death section { border: 1px solid var(--kdm-border); background: var(--kdm-panel); border-radius: 4px; padding: 12px; }
+.kingdom-death h2 { color: var(--kdm-accent); font-family: Georgia, serif; font-size: 20px; border: 0; margin: 0 0 10px; }
+.kingdom-death p { line-height: 1.45; }
+.kingdom-death .kdm-eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 11px; color: var(--kdm-accent); }
+.kingdom-death label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; min-width: 0; margin: 5px 0; }
+.kingdom-death input, .kingdom-death select, .kingdom-death textarea { color: var(--kdm-ink); background: #101214; border: 1px solid var(--kdm-border); border-radius: 3px; width: 100%; }
+.kingdom-death select option { background: #101214; color: var(--kdm-ink); }
+.kingdom-death textarea { min-height: 90px; resize: vertical; }
+.kingdom-death input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--kdm-accent); }
+.kingdom-death button { color: var(--kdm-ink); background: #35302a; border: 1px solid var(--kdm-border); padding: 6px 10px; height: auto; min-height: 32px; }
+.kingdom-death button:disabled { opacity: .5; cursor: not-allowed; }
+.kingdom-death :focus-visible { outline: 2px solid var(--kdm-accent); outline-offset: 2px; }
+.kingdom-death .kdm-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.kingdom-death .kdm-party { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.kingdom-death .kdm-checks, .kingdom-death .kdm-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.kingdom-death .kdm-checks label { flex-direction: row; align-items: center; }
+.kingdom-death .kdm-hint, .kingdom-death small { color: var(--kdm-muted); font-size: 12px; }
+.kingdom-death table { width: 100%; margin: 0; background: transparent; }
+.kingdom-death td, .kingdom-death th { padding: 5px; text-align: center; }
+.kingdom-death td input[type=number] { max-width: 100px; }
+.kingdom-death .kdm-gear-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.kingdom-death .kdm-gear-cell { min-height: 145px; border: 1px solid var(--kdm-border); padding: 9px; display: flex; flex-direction: column; gap: 8px; background: #151719; overflow-wrap: anywhere; }
+.kingdom-death .kdm-gear-title { font-family: Georgia,serif; color: var(--kdm-accent); }
+.kingdom-death .kdm-empty { margin: auto; color: var(--kdm-muted); }
+.kingdom-death .kdm-inventory { list-style: none; margin: 10px 0 0; padding: 0; }
+.kingdom-death .kdm-inventory li { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px solid var(--kdm-border); }
+.kingdom-death .kdm-inventory li span { flex: 1; overflow-wrap: anywhere; }
+.kingdom-death .kdm-inventory small { display: block; }
+.kingdom-death .kdm-inventory button { width: auto; }
+.kingdom-death footer { position: sticky; bottom: 0; background: var(--kdm-bg); padding: 8px 0; }

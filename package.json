@@ -1,0 +1,18 @@
+{
+  "name": "kingdom-death",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test",
+    "validate": "node tools/validate.mjs",
+    "check": "npm run validate && npm test",
+    "build": "npm run check && python3 tools/package.py"
+  },
+  "devDependencies": {
+    "handlebars": "^4.7.8"
+  }
+}
