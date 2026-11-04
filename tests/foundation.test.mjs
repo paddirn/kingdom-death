@@ -9,6 +9,8 @@ class TypeDataModel {}
 class Sheet {
   _processFormData(event, form, formData) { return formData.object; }
   async _prepareContext() { return {}; }
+  async _onRender() {}
+  async _processSubmitData(event,form,data) { if(this.failSave) throw new Error("save failed"); this.saved=data; return data; }
 }
 const registered = [], once = new Map(), settings = [];
 globalThis.foundry = {
@@ -99,4 +101,47 @@ test("read-only sheet disables fieldset and omits Save", () => {
 test("resource quantity renders zero rather than disappearing", () => {
   const html = render("item",{item:{name:"Test"},isResource:true,system:{...defaults(itemModels.resource.defineSchema()),quantity:0},editable:true});
   assert.match(html,/name="system.quantity" value="0"/);
+});
+test("new survivor fields default safely while old data paths remain", () => {
+  const schema = SurvivorData.defineSchema(), data = defaults(schema);
+  for (const key of ["cannotSpendSurvival","cannotUseFightingArts","skipNextHunt","rerollUsed"]) assert.equal(data[key],false);
+  for (const key of ["sex","impairments","oncePerLifetime"]) assert.equal(data[key],"");
+  assert.deepEqual(data.weaponProficiency,{type:"",value:0,specialist:false,master:false});
+  const legacy = {huntXP:6,courage:3,notes:"Old notes",gearGrid:{slot0:"owned"}};
+  const augmented = {...data,...legacy};
+  assert.equal(augmented.huntXP,6); assert.equal(augmented.gearGrid.slot0,"owned");
+  assert.equal(augmented.cannotUseFightingArts,false);
+  assert.equal(schema.huntXP.options.initial,0);
+});
+test("survivor context filters special Items and preserves active tab", async () => {
+  game.i18n = {localize:key=>key};
+  const items = [{id:"a",name:"Art",type:"fightingArt",sort:0},{id:"d",name:"Disorder",type:"disorder",sort:1},{id:"b",name:"Ability",type:"ability",sort:2},{id:"g",name:"Gear",type:"gear",sort:3}];
+  const sheet = new SurvivorSheet();sheet.actor={system:defaults(SurvivorData.defineSchema()),items:{contents:items,filter:fn=>items.filter(fn)}};
+  sheet.tabGroups.primary="specials";
+  const context=await sheet._prepareContext({});
+  assert.deepEqual(context.arts.map(i=>i.id),["a"]);assert.deepEqual(context.disorders.map(i=>i.id),["d"]);assert.deepEqual(context.abilities.map(i=>i.id),["b"]);
+  assert.equal(context.active.specials,true);assert.equal(context.cells.length,9);
+  const html=render("survivor",context);
+  assert.match(html,/class="tab active" data-group="primary" data-tab="specials"/);
+  assert.ok(html.indexOf('<h2>Fighting Arts')<html.indexOf('<h2>Disorders'));
+  for (const key of ["cannotUseFightingArts","impairments","skipNextHunt","oncePerLifetime","rerollUsed"]) assert.ok(html.includes(`name="system.${key}"`));
+});
+test("rerenders restore only draft fields and retain checkbox false", async () => {
+  const sheet=new SurvivorSheet(); sheet.isEditable=true;
+  const inputs=[{name:"name",value:"Remote"},{name:"system.rerollUsed",type:"checkbox",checked:true},{name:"system.notes",value:"Remote notes"}];
+  const handlers={};sheet.element={querySelectorAll:selector=>selector==="[name]"?inputs:[],addEventListener:(type,fn)=>handlers[type]=fn};
+  sheet._draft.set("name","Unsaved name");sheet._draft.set("system.rerollUsed",false);
+  sheet.tabGroups.primary="gear";
+  await sheet._onRender({},{});
+  assert.equal(inputs[0].value,"Unsaved name");assert.equal(inputs[1].checked,false);assert.equal(inputs[2].value,"Remote notes");
+  handlers.input({target:{name:"system.impairments",value:"Draft impairment"}});
+  assert.equal(sheet._draft.get("system.impairments"),"Draft impairment");assert.equal(sheet.tabGroups.primary,"gear");
+});
+test("successful Save clears draft; failure retains it for correction", async () => {
+  const sheet=new SurvivorSheet();sheet._draft.set("system.notes","draft");sheet.failSave=true;
+  await assert.rejects(sheet._processSubmitData(null,null,{}),/save failed/);
+  assert.equal(sheet._draft.get("system.notes"),"draft");sheet.failSave=false;
+  const data={system:{notes:"draft",cannotUseFightingArts:true,impairments:"injury",rerollUsed:false}};
+  await sheet._processSubmitData(null,null,data);
+  assert.deepEqual(sheet.saved,data);assert.equal(sheet._draft.size,0);
 });

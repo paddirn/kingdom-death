@@ -60,3 +60,7 @@ npm run build
 Python regression tests check release packaging and metadata; Node tests cover pure gear/campaign rules, controller permission guards and update payloads, template rendering, schema structure and registration with a minimal API stub. They do **not** establish Foundry data validation, rendering, database or multiplayer compatibility. Validation checks JavaScript syntax, module/template paths, JSON, and manifest invariants. Runtime has no npm dependencies or external network calls.
 
 See [architecture](docs/architecture.md), [decisions](docs/decisions.md), [development plan](docs/development-plan.md), and [release procedure](docs/releases.md). The validation workflow builds artifacts on pushes and PRs. The manual reviewed-release workflow validates actual uploaded assets and publishes only when dispatched on main. Merging this correction does not publish v0.1.1 by itself.
+
+## Survivor sheet
+
+The Survivor sheet uses Attributes, Gear and Specials tabs with editable printed-sheet organization. See [Survivor redesign](docs/survivor-sheet.md) for new fields, draft handling, manual milestones and the 14.365 runtime acceptance checklist.
