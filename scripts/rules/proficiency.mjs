@@ -1,9 +1,12 @@
-export function proficiencyName(type, rank = "specialization") {
-  return `${String(type ?? "").trim() || "Proficiency"} (${rank === "mastery" ? "mastery" : "specialization"})`;
+export function proficiencyRank(rank) { return ({specialization:'specialist',mastery:'master'})[rank] ?? rank ?? 'specialist'; }
+export function proficiencyName(type, rank = 'specialist') {
+  const name=String(type ?? '').trim() || 'Proficiency';
+  rank=proficiencyRank(rank);
+  return rank === 'none' ? name : `${name} (${rank})`;
 }
 export function keywords(values) {
   const seen = new Set();
-  return (Array.isArray(values) ? values : []).map(v => String(v).trim()).filter(v => {
+  return (Array.isArray(values) ? values : typeof values === "string" ? [values] : []).map(v => String(v).trim()).filter(v => {
     const key = v.toLocaleLowerCase();
     if (!v || seen.has(key)) return false;
     seen.add(key); return true;

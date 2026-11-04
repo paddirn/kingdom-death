@@ -26,7 +26,7 @@ export class SurvivorSheet extends KDMActorSheet {
   tabGroups = {primary: "attributes"};
   _draft = new Map();
   static DEFAULT_OPTIONS = {classes: ["kdm-survivor"], position: {width: 900, height: 850},
-    actions: {progress: this.progress, clearGear: this.clearGear, deleteItem: this.deleteItem,
+    actions: {unlinkProficiency: this.unlinkProficiency, progress: this.progress, clearGear: this.clearGear, deleteItem: this.deleteItem,
       familyApply: this.familyApply, familyClear: this.familyClear,
       openFamily: this.openFamily, actorImage: function(event,target) { if(this.isEditable) pickImage(this.actor,target.dataset.imagePath); }}};
   static progress(event, target) {
@@ -68,6 +68,9 @@ export class SurvivorSheet extends KDMActorSheet {
     this._draft.clear();
     try {
       if (data.system?.proficiencyUuid && data.system.proficiencyUuid !== this.actor.system.proficiencyUuid) await resolveProficiency(data.system.proficiencyUuid);
+      for(const uuid of data.system?.additionalProficiencies ?? []) {
+        if(!(this.actor.system.additionalProficiencies ?? []).includes(uuid)) await resolveProficiency(uuid);
+      }
       return await super._processSubmitData(event, form, data, options);
     }
     catch (error) { for (const [key,value] of draft) if (!this._draft.has(key)) this._draft.set(key,value); throw error; }
@@ -83,7 +86,11 @@ export class SurvivorSheet extends KDMActorSheet {
       boxes: Array.from({length}, (_, i) => ({value: i + 1, checked: i < value, milestone: milestones.includes(i + 1)}))});
     const owned = type => this.actor.items.contents.filter(i => i.type === type).toSorted((a,b) => a.sort - b.sort).map(i => ({id:i.id,name:i.name}));
     const choiceGroup = (path, entries) => ({path, options: [{value: "", title: "None", description: ""}, ...entries.map(([value,title,description]) => ({value,title,description}))].map(option => ({...option, selected: (this.actor.system[path] ?? "") === option.value}))});
-    return {...context, family:familyContext(this.actor,game.actors.contents),
+    const additionalProficiencies=await Promise.all((this._draft.get('system.additionalProficiencies') ?? this.actor.system.additionalProficiencies ?? []).map(async uuid=>{
+      try {const item=await resolveProficiency(uuid);return {uuid,name:item.name,available:true};}
+      catch {return {uuid,name:'Missing or inaccessible Proficiency',available:false};}
+    }));
+    return {...context, additionalProficiencies, specials:[...owned('fightingArt').map(i=>({...i,label:'fighting art'})),...owned('ability').map(i=>({...i,label:'ability'}))], family:familyContext(this.actor,game.actors.contents),
       customTokens:Object.entries(this.actor.system.customTokens ?? {}).map(([key,token])=>({key,...token})),
       proficiencyUuid, proficiencyAvailable:!!proficiency, proficiencyName:proficiency?.name ?? (proficiencyUuid ? "Missing or inaccessible Proficiency" : "No linked Proficiency"),
       survivalActions: ["dodge", "encourage", "surge", "dash", "endure"].map(key => ({key, label: key[0].toUpperCase() + key.slice(1), checked: this.actor.system.survivalActions?.[key] ?? false})),
@@ -119,6 +126,12 @@ export class SurvivorSheet extends KDMActorSheet {
       if(!this.isEditable) return;
       if(!acceptsItem(target,item,true)) {ui.notifications.warn("This target does not accept that Item type.");return;}
       try {
+        if(target.dataset.kdmDrop === "additionalProficiency") {
+          await resolveProficiency(item.uuid);
+          const values=this._draft.get('system.additionalProficiencies') ?? this.actor.system.additionalProficiencies ?? [];
+          this._draft.set('system.additionalProficiencies',[...new Set([...values,item.uuid])]);
+          return this.render({force:false});
+        }
         if(target.dataset.kdmDrop === "proficiency") return await this.linkProficiency(item.uuid);
         return await receiveItem(this.actor,item,target.dataset.kdmDrop === "gear" ? target.dataset.slot : null);
       } catch(error) {ui.notifications.warn(error.message);}
@@ -145,6 +158,12 @@ export class SurvivorSheet extends KDMActorSheet {
       return await super._onDrop(event);
     } catch(error) {ui.notifications.warn(`Drop failed: ${error.message}`);}
     finally { this._clearDropFeedback?.(); }
+  }
+  static unlinkProficiency(event,target) {
+    if(!this.isEditable) return;
+    const values=this._draft.get('system.additionalProficiencies') ?? this.actor.system.additionalProficiencies ?? [];
+    this._draft.set('system.additionalProficiencies',values.filter(uuid=>uuid!==target.dataset.uuid));
+    this.render({force:false});
   }
   static async clearGear(event,target) {
     if(!this.isEditable) return;
@@ -190,6 +209,7 @@ export class SurvivorSheet extends KDMActorSheet {
     const grid=this.actor.system?.gearGrid ?? data.system.gearGrid;
     validateGrid(grid, this.actor.items.contents);
     delete data.system.gearGrid;
+    if(this._draft.has("system.additionalProficiencies")) data.system.additionalProficiencies=[...new Set(this._draft.get("system.additionalProficiencies"))];
     if(this._draft.has("system.proficiencyUuid")) data.system.proficiencyUuid=this._draft.get("system.proficiencyUuid");
     if (data.system.survival) {
       const proposed = {...this.actor.system?.survival, ...data.system.survival};

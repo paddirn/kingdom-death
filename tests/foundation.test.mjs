@@ -7,6 +7,7 @@ class Field { constructor(options = {}) { this.options = options; } }
 class ArrayField extends Field { constructor(element, options) { super(options); this.element=element; } }
 class Schema extends Field { constructor(fields) { super(); this.fields = fields; } }
 class TypeDataModel {
+  static migrateData(source) {return source;}
   static _cleanData(data) { return data; }
   static validateJoint() {}
   constructor(data = {}) { Object.assign(this, defaults(this.constructor.defineSchema()), data); }
@@ -218,7 +219,7 @@ test('additive Survivor and Proficiency defaults validate and survive serializat
   assert.equal(survivor.validate(),true);assert.equal(proficiency.validate(),true);
   assert.equal(survivor.proficiencyUuid,'');assert.deepEqual(survivor.family,{parents:{parent1:'',parent2:''},children:[]});
   assert.equal(Object.keys(survivor.customTokens).length,5);assert.deepEqual(survivor.customTokens.token1,{label:'_ tokens',value:0});
-  assert.equal(proficiency.type,'');assert.equal(proficiency.rank,'specialization');assert.deepEqual(proficiency.keywords,[]);assert.equal(proficiency.description,'');
+  assert.equal(proficiency.type,'');assert.equal(proficiency.rank,'specialist');assert.deepEqual(proficiency.keywords,[]);assert.equal(proficiency.description,'');
   const saved=JSON.parse(JSON.stringify({...survivor,proficiencyUuid:'Item.x',family:{parents:{parent1:'a',parent2:''},children:['b']},customTokens:{...survivor.customTokens,token1:{label:'Pain',value:2}}}));
   assert.equal(new SurvivorData(saved).validate(),true);assert.equal(saved.customTokens.token1.value,2);
   assert.equal(new itemModels.proficiency({keywords:['Sharp'],description:'first\nsecond'}).validate(),true);
@@ -249,7 +250,7 @@ test('new family and image tabs preserve dirty fields and selection during reren
 test('Item proficiency form submits structured tags and derived name',async()=>{
   const {KDMItemSheet}=await import('../scripts/sheets/item.mjs');const sheet=new KDMItemSheet();sheet.item={type:'proficiency',system:{keywords:['old']}};sheet._tags=[' New ','new','Second'];
   const data=sheet._processFormData(null,null,{object:{name:'wrong',system:{type:'Sword',rank:'mastery',description:'a\nb'}}});
-  assert.deepEqual(data.system.keywords,['New','Second']);assert.equal(data.name,'Sword (mastery)');assert.equal(data.system.description,'a\nb');
+  assert.deepEqual(data.system.keywords,['New','Second']);assert.equal(data.name,'Sword (master)');assert.equal(data.system.description,'a\nb');
 });
 test('family dead overlay and Item preview are rendered independently of edit controls',()=>{
   const html=render('survivor',{actor:{},system:{},editable:false,family:{current:{available:true,id:'x',img:'x.png',name:'Dead',dead:true}}});
@@ -278,8 +279,8 @@ test('Hunt XP and compact Proficiency omit redundant controls while legacy schem
 });
 test('Proficiency renders a name-only native UUID link, placeholder or missing state',()=>{
   const base={actor:{},system:{}};
-  const linked=render('survivor',{...base,proficiencyUuid:'Item.proficiency',proficiencyName:'Sword (specialization)',proficiencyAvailable:true});
-  assert.match(linked,/class="content-link"[^>]+data-uuid="Item.proficiency"[^>]*>Sword \(specialization\)<\/a>/);
+  const linked=render('survivor',{...base,proficiencyUuid:'Item.proficiency',proficiencyName:'Sword (specialist)',proficiencyAvailable:true});
+  assert.match(linked,/class="content-link"[^>]+data-uuid="Item.proficiency"[^>]*>Sword \(specialist\)<\/a>/);
   assert.ok(!linked.includes('>Item.proficiency<'));
   assert.ok(render('survivor',base).includes('Drop Proficiency Item here'));
   assert.ok(render('survivor',{...base,proficiencyUuid:'Item.deleted'}).includes('Missing or unavailable Proficiency'));
@@ -366,4 +367,58 @@ test('Living Glossary settings menu is GM restricted and template disables unava
   const html=render('living-glossary',{canSync:false,permissionError:'Only a GM can sync.'});
   assert.match(html,/type="submit" disabled/);assert.match(html,/Only a GM/);
   assert.match(render('living-glossary',{canSync:true}),/type="submit" >Sync Now/);
+});
+
+test('all Item models migrate legacy keywords without splitting punctuation and preserve other data',()=>{
+  for(const Model of Object.values(itemModels)) {
+    for(const [old,expected] of [['',[]],[' Sharp, heavy; edge ',['Sharp, heavy; edge']],[[' A ','a','B'],['A','B']]]) {
+      const source={keywords:old,source:'book',notes:'keep'};
+      const migrated=Model.migrateData(source);
+      assert.deepEqual(migrated.keywords,expected);assert.equal(migrated.source,'book');assert.equal(migrated.notes,'keep');
+      assert.equal(new Model(migrated).validate(),true);
+    }
+    assert.deepEqual(Model.migrateData({notes:'keep'}),{notes:'keep'});
+    assert.deepEqual(defaults(Model.defineSchema()).keywords,[]);
+  }
+  for(const [old,next] of [['specialization','specialist'],['mastery','master'],['none','none']]) assert.equal(itemModels.proficiency.migrateData({rank:old}).rank,next);
+});
+test('additional proficiency references deduplicate, unlink and submit independently of primary',async()=>{
+  const sheet=new SurvivorSheet();sheet.isEditable=true;sheet.render=()=>{};
+  sheet.actor={system:{proficiencyUuid:'Item.primary',additionalProficiencies:['Item.extra'],gearGrid:{}},items:{contents:[]}};
+  globalThis.fromUuid=async()=>({documentName:'Item',type:'proficiency',testUserPermission:()=>true});
+  const event=()=>({target:{closest:()=>({dataset:{kdmDrop:'additionalProficiency'}})}});
+  await sheet._onDropItem(event(),{documentName:'Item',type:'proficiency',uuid:'Item.extra'});
+  await sheet._onDropItem(event(),{documentName:'Item',type:'proficiency',uuid:'Item.next'});
+  assert.deepEqual(sheet._draft.get('system.additionalProficiencies'),['Item.extra','Item.next']);
+  SurvivorSheet.unlinkProficiency.call(sheet,null,{dataset:{uuid:'Item.extra'}});
+  const data=sheet._processFormData(null,null,{object:{system:{impairments:'kept',skipNextHunt:true}}});
+  assert.deepEqual(data.system.additionalProficiencies,['Item.next']);assert.equal(data.system.proficiencyUuid,undefined);assert.equal(data.system.impairments,'kept');assert.equal(data.system.skipNextHunt,true);
+});
+test('shared Item tags have no Add button and Source follows all specific fields',()=>{
+  for(const type of Object.keys(itemModels)) {
+    const html=render('item',{item:{},system:{},editable:true,isProficiency:type==='proficiency',isGear:type==='gear',isResource:type==='resource'});
+    assert.match(html,/data-keyword-entry/);assert.ok(!html.includes('data-action="addKeyword"'));
+    assert.equal((html.match(/name="system.source"/g)||[]).length,1);
+    assert.ok(html.indexOf('name="system.source"')>html.indexOf('name="system.notes"'));
+  }
+});
+test('keyword Enter prevents form submission, tags survive rerender and readonly refuses edits',async()=>{
+  const {KDMItemSheet}=await import('../scripts/sheets/item.mjs');const sheet=new KDMItemSheet();
+  const handlers={},input={value:'',matches:s=>s==='[data-keyword-entry]'};
+  sheet.item={type:'gear',system:{keywords:['Old']}};sheet.isEditable=true;sheet.render=()=>{};
+  sheet.element={ownerDocument:{defaultView:{AbortController}},querySelector:()=>input,querySelectorAll:()=>[],addEventListener:(t,f)=>handlers[t]=f};
+  await sheet._onRender({},{});input.value=' New ';let prevented=0,stopped=0;
+  handlers.keydown({key:'Enter',target:input,preventDefault:()=>prevented++,stopPropagation:()=>stopped++});
+  assert.equal(prevented,1);assert.equal(stopped,1);assert.deepEqual(sheet._tags,['Old','New']);
+  await sheet._onRender({},{});assert.deepEqual(sheet._tags,['Old','New']);assert.equal(input.value,'');
+  KDMItemSheet.removeKeyword.call(sheet,null,{dataset:{index:'0'}});assert.deepEqual(sheet._tags,['New']);
+  sheet.isEditable=false;input.value='blocked';KDMItemSheet.addKeyword.call(sheet);assert.deepEqual(sheet._tags,['New']);
+});
+test('combined Specials retain independent types and fields while primary legacy rank controls are hidden',async()=>{
+  const sheet=new SurvivorSheet();sheet.actor={system:defaults(SurvivorData.defineSchema()),items:{contents:[{id:'f',name:'Art',type:'fightingArt',sort:0},{id:'a',name:'Ability',type:'ability',sort:1}],filter:()=>[]}};
+  const context=await sheet._prepareContext({});assert.deepEqual(context.specials.map(i=>i.label),['fighting art','ability']);
+  const html=render('survivor',{actor:{},system:sheet.actor.system,editable:true,...context});
+  assert.match(html,/Fighting Arts &amp; Abilities/);assert.match(html,/Disorders &amp; Impairments/);
+  assert.ok(!html.includes('name="system.weaponProficiency.specialist"'));assert.ok(!html.includes('data-kdm-drop="ability"'));
+  assert.match(html,/name="system.impairments"/);assert.match(html,/name="system.skipNextHunt"/);
 });

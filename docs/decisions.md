@@ -46,3 +46,7 @@ Use ActorSheetV2's cached DragDrop controller and native V14 resolution rather t
 Survival uses a pure clamping function, live controls, submission normalization and TypeDataModel cleaning/joint validation. Complete pairs are normalized; partial updates never fill absent fields with defaults. This preserves all saved data paths and confines the invariant to Survival.
 
 Use native Journal/JournalEntryPage documents for glossary data, with source namespace and stable entry ID flags rather than mutable titles. JSON import is retrieval-independent and GM-triggered. Live website copying is omitted because published source terms do not establish permission for a persistent Forge mirror, even though the inspected page exposes structured data and permissive CORS. No copyrighted dataset ships with the system. A designated active GM plus same-origin Web Locks prevents ordinary concurrent sync attempts; no server-transaction guarantee is claimed.
+
+## Keyword and proficiency compatibility
+
+Preserve each nonempty legacy keyword string as one tag because no delimiter contract existed. Use inherited TypeDataModel migration for world/embedded Items; persist canonical values through normal saves without destructive startup rewriting. Rename legacy ranks through model migration while deriving display names on save. Retain hidden Survivor specialist/master Boolean values and keep primary/additional UUID references independent. Unlinking is a deferred form edit, never a source Item deletion.

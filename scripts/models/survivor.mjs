@@ -16,7 +16,7 @@ export class SurvivorData extends foundry.abstract.TypeDataModel {
   }
   static defineSchema() {
     return {...common(),
-      proficiencyUuid: text({blank: true}),
+      proficiencyUuid: text({blank: true}), additionalProficiencies: new fields.ArrayField(text({blank:false}), {initial:[]}),
       family: schema({parents: schema({parent1: text({blank:true}), parent2: text({blank:true})}), children: new fields.ArrayField(text({blank:false}), {initial: []})}),
       customTokens: schema(Object.fromEntries(Array.from({length:5}, (_,i)=>[`token${i+1}`, schema({label:text({blank:true,initial:"_ tokens"}),value:count()})]))), survivalActions: schema({dodge: bool(), encourage: bool(), surge: bool(), dash: bool(), endure: bool()}),
       courageChoice: text({blank: true, choices: ["", "stalwart", "prepared", "matchmaker"]}),
