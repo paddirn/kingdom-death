@@ -10,7 +10,7 @@ Record date, Foundry exact version, Forge game, browser, commit, tester, errors 
 - [ ] Survivor fields, armor/injury/brain boxes and statuses save/reload
 - [ ] Item fields, quantity zero, attack modifiers and affinities save/reload
 - [ ] Gear drops make independent owned copies; slot assignments persist
-- [ ] Duplicate assignment rejected; deletion/stale reference can be repaired
+- [ ] Owned gear moves without duplicate assignment; deletion clears slots and legacy missing references can be cleared
 - [ ] Settlement counters, party/quarry and phase persist across reload
 - [ ] Duplicate party rejected; deleted Actor references can be cleared
 - [ ] GM campaign selection persists; player cannot change world selection
@@ -22,3 +22,5 @@ Record date, Foundry exact version, Forge game, browser, commit, tester, errors 
 - [ ] Reload in each phase preserves shared state
 
 After passing: record the exact commit/release, Foundry build, Forge game configuration, tester and date. The manifest already declares `verified: "14.365"` as requested for installation metadata; its badge is not the runtime test record. Do not mark this checklist complete based on that badge or offline package validation.
+
+- [ ] Complete the latest [Survivor drop-target checks](survivor-drag-drop.md).

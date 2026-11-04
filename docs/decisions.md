@@ -31,3 +31,10 @@ Consulted November 3, 2026. Published API documentation is evidence for conventi
 - Family nodes reference world Actor IDs and resolve live images/names. Reciprocal edits use a pure plan, ownership preflight and one native batch, with explicit interruption warnings. Cross-client transaction/locking is not claimed. A GM uses the same UI when a player lacks ownership.
 - Shared FilePicker/ImagePopout helpers use native image paths; avatar/prototype token changes are independent and immediate.
 - Preserve all form drafts across document rerenders; family/image controls are separate immediate actions. See the new feature checklist for pending runtime verification.
+
+## Compact Survivor drop targets
+
+- One closest-target router validates native resolved Items; no custom drag payload format. Event identity prevents one drop from creating two copies.
+- Inventory writes are queued per Actor on a client. Existing owned Items move; outside Items copy once. Replacement/clearing never deletes displaced Items. Failed assignment preserves the copy in Inventory for recovery.
+- Grid mutations save immediately and are omitted from whole-form submission. Proficiency remains a Save Changes draft; existing UUID and legacy text paths are retained.
+- CSS subgrid aligns top modules without fixed section heights. No runtime or visual verification is implied by template/CSS tests.
