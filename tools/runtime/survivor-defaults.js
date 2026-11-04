@@ -8,6 +8,7 @@ for (const sex of [undefined, "", "M", "F"]) {
   const actor = new foundry.documents.Actor({name: "Default validation regression", type: "survivor"});
   const model = new Model(sex === undefined ? {} : {sex}, {parent: actor});
   if (model.validate({strict: true}) === false || model.invalid) throw new Error("Survivor defaults failed validation");
+  if (Object.values(model.survivalActions).some(value => value !== false) || model.courageChoice !== "" || model.understandingChoice !== "") throw new Error("New Survivor refinement defaults changed");
   if (model.sex !== (sex ?? "")) throw new Error("Sex default/choice changed");
   for (const value of [model.impairments, model.oncePerLifetime, model.weaponProficiency.type]) {
     if (value !== "") throw new Error("Expected blank optional text default");

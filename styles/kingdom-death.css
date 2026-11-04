@@ -58,3 +58,21 @@
 .kdm-survivor .kdm-gear-cell { aspect-ratio: .72; min-height:180px; border:2px solid var(--kdm-border); }
 @container (max-width: 650px) { .kdm-survivor .kdm-paper-columns { grid-template-columns:1fr; } }
 .kdm-survivor .window-content { container-type:inline-size; }
+.kingdom-death .kdm-number { text-align:center; }
+.kingdom-death .kdm-stepper { display:inline-flex; align-items:center; gap:2px; max-width:100%; }
+.kingdom-death .kdm-stepper input { width:calc(var(--kdm-digits, 2) * 1ch + 22px); min-width:0; flex:1; }
+.kingdom-death .kdm-stepper button { flex:0 0 22px; min-width:22px; padding:0; }
+.kingdom-death .kdm-number-display { width:calc(var(--kdm-digits, 2) * 1ch + 16px); }
+.kdm-survivor .kdm-survivor-header { display:flex; align-items:start; gap:12px; }
+.kdm-survivor .kdm-survivor-header > label:first-child { flex:1; }
+.kdm-survivor .kdm-survivor-header > label:last-child { flex:0 0 100px; }
+.kdm-survivor .kdm-survival-layout { display:grid; grid-template-columns:1fr auto; gap:10px; }
+.kdm-survivor .kdm-square-numbers input[type=number], .kdm-survivor .kdm-stat-boxes input[type=number] { width:52px; height:52px; flex:none; font:24px Georgia,serif; }
+.kdm-survivor .kdm-square-numbers .kdm-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.kdm-survivor .kdm-stat-boxes .kdm-stepper { flex-wrap:wrap; justify-content:center; }
+.kdm-survivor .kdm-stat-boxes .kdm-stepper input { order:-1; width:100%; }
+.kdm-survivor .kdm-radio-option { display:flex; flex-direction:row; align-items:start; gap:8px; }
+.kdm-survivor .kdm-radio-option input { flex:none; width:16px; margin-top:3px; }
+.kdm-survivor .kdm-anatomy { width:22px; height:22px; fill:currentColor; margin-right:6px; vertical-align:middle; }
+.kdm-survivor .kdm-filled-box { display:inline-block; width:12px; height:12px; background:#000; border:1px solid #aaa; }
+.kdm-survivor .kdm-injury-note { font-size:12px; }

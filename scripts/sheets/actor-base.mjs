@@ -1,3 +1,4 @@
+import { enhanceNumbers } from "../ui/numbers.mjs";
 const { api, sheets } = foundry.applications;
 export class KDMActorSheet extends api.HandlebarsApplicationMixin(sheets.ActorSheetV2) {
   static DEFAULT_OPTIONS = {
@@ -5,6 +6,10 @@ export class KDMActorSheet extends api.HandlebarsApplicationMixin(sheets.ActorSh
     form: {submitOnChange: false, closeOnSubmit: false},
     actions: {addItem: this.addItem, editItem: this.editItem, deleteItem: this.deleteItem}
   };
+  async _onRender(context, options) {
+    await super._onRender(context, options);
+    enhanceNumbers(this.element, this.isEditable, this.actor.system);
+  }
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
     return {...context, actor: this.actor, system: this.actor.system, editable: this.isEditable,
