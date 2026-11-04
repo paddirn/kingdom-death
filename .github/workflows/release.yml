@@ -1,0 +1,55 @@
+name: Publish reviewed release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version in system.json (for example 0.1.1)'
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: publish-reviewed-release
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Validate requested version
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          node -e 'const v=process.env.RELEASE_VERSION; if(!/^\d+\.\d+\.\d+$/.test(v)||require("./system.json").version!==v)process.exit(1)'
+      - run: npm ci
+      - run: npm run build
+      - name: Stage and verify release assets before publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          tag="v$RELEASE_VERSION"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo 'Release exists; refusing to overwrite published assets or an incomplete draft.'
+            exit 1
+          fi
+          gh release create "$tag" dist/system.json "dist/kingdom-death-$RELEASE_VERSION.zip" --target "$GITHUB_SHA" --title "$tag — System Foundation" --notes-file docs/release-notes.md --draft
+          gh release download "$tag" --dir "$RUNNER_TEMP/release-audit" --pattern system.json --pattern "kingdom-death-$RELEASE_VERSION.zip"
+          python3 tools/check_release.py "$RUNNER_TEMP/release-audit/system.json" --zip "$RUNNER_TEMP/release-audit/kingdom-death-$RELEASE_VERSION.zip"
+          cmp dist/system.json "$RUNNER_TEMP/release-audit/system.json"
+          cmp "dist/kingdom-death-$RELEASE_VERSION.zip" "$RUNNER_TEMP/release-audit/kingdom-death-$RELEASE_VERSION.zip"
+          gh release edit "$tag" --draft=false --latest
+      - name: Verify public manifest and its actual download URL
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: python3 tools/check_release.py "https://github.com/paddirn/kingdom-death/releases/download/v$RELEASE_VERSION/system.json"

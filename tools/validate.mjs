@@ -8,7 +8,10 @@ const manifest = JSON.parse(fs.readFileSync(path.join(root,"system.json"), "utf8
 const pkg = JSON.parse(fs.readFileSync(path.join(root,"package.json"), "utf8"));
 assert.equal(manifest.id, "kingdom-death");
 assert.equal(manifest.version, pkg.version);
-assert.deepEqual(manifest.compatibility, {minimum: "14.365", maximum: "14.365"});
+const lock = JSON.parse(fs.readFileSync(path.join(root,"package-lock.json"), "utf8"));
+assert.equal(lock.version, manifest.version);
+assert.equal(lock.packages[""].version, manifest.version);
+assert.deepEqual(manifest.compatibility, {minimum: "14.365", verified: "14.365", maximum: "14.365"});
 assert.equal(manifest.documentTypes.Actor.survivor instanceof Object, true);
 for (const p of [...manifest.esmodules, ...manifest.styles, ...manifest.languages.map(l => l.path)]) assert.ok(fs.existsSync(path.join(root,p)), p);
 for (const field of ["url", "bugs", "manifest", "download"]) if (manifest[field]) assert.equal(new URL(manifest[field]).protocol, "https:");

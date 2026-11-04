@@ -21,4 +21,4 @@ Record date, Foundry exact version, Forge game, browser, commit, tester, errors 
 - [ ] Native Cards directory works; reserved UUID fields persist
 - [ ] Reload in each phase preserves shared state
 
-After passing: record evidence and set `compatibility.verified` to `14.365` in a reviewed change; update manifest validation accordingly. Until then the package is an unverified foundation candidate.
+After passing: record the exact commit/release, Foundry build, Forge game configuration, tester and date. The manifest already declares `verified: "14.365"` as requested for installation metadata; its badge is not the runtime test record. Do not mark this checklist complete based on that badge or offline package validation.

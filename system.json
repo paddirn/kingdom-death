@@ -2,9 +2,10 @@
   "id": "kingdom-death",
   "title": "Kingdom Death: Monster",
   "description": "Unofficial content-free system foundation. Targets Foundry 14.365; runtime verification pending.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "compatibility": {
     "minimum": "14.365",
+    "verified": "14.365",
     "maximum": "14.365"
   },
   "authors": [
@@ -50,5 +51,5 @@
   "url": "https://github.com/paddirn/kingdom-death",
   "bugs": "https://github.com/paddirn/kingdom-death/issues",
   "manifest": "https://github.com/paddirn/kingdom-death/releases/latest/download/system.json",
-  "download": "https://github.com/paddirn/kingdom-death/releases/download/v0.1.0/kingdom-death-0.1.0.zip"
+  "download": "https://github.com/paddirn/kingdom-death/releases/download/v0.1.1/kingdom-death-0.1.1.zip"
 }
