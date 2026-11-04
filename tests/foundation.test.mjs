@@ -334,3 +334,13 @@ test('bare UUID drops resolve once, route to Item handler and warn on unavailabl
   const warnings=[];globalThis.ui={notifications:{warn:m=>warnings.push(m)}};
   await sheet._onDrop({dataTransfer:{getData:()=> 'Item.gone'},target:event.target});assert.match(warnings[0],/accessible/);
 });
+test('Survivor has exactly one header Save, ten-column Hunt XP and enlarged read-only totals',()=>{
+  const html=render('survivor',{actor:{},system:{},editable:true});
+  assert.equal((html.match(/type="submit"/g)||[]).length,1);
+  assert.ok(html.indexOf('class="kdm-header-save"')<html.indexOf('</header>'));
+  assert.ok(html.indexOf('name="system.sex"')<html.indexOf('class="kdm-header-save"'));
+  assert.ok(!render('survivor',{actor:{},system:{},editable:false}).includes('type="submit"'));
+  const css=fs.readFileSync(new URL('../styles/kingdom-death.css',import.meta.url),'utf8');
+  assert.match(css,/kdm-hunt-xp \.kdm-track-boxes \{ display:grid; grid-template-columns:repeat\(10,18px\)/);
+  assert.match(css,/input.kdm-number-display \{ width:56px/);
+});
