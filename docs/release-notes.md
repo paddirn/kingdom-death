@@ -1,7 +1,7 @@
-# v0.1.2 — Survivor sheet redesign
+# v0.1.3 — Survivor default validation fix
 
-Adds Attributes, Gear and Specials tabs with a persistent survivor name header. Attributes follows the supplied printed-sheet organization with six stat boxes, injury rows and manual progression tracks. Gear preserves existing assignment and inventory behavior. Specials manages embedded Fighting Arts, Disorders and Abilities with the requested flags and notes.
+Fixes the reported Survivor Actor creation error by explicitly allowing blank Sex values while retaining empty/M/F choices. Newly added optional Survivor text fields also explicitly allow blank defaults. The shared text helper, existing data paths and stored Survivor values are preserved.
 
-Adds defaulted Survivor fields while preserving existing data paths and embedded Item references. Draft text and checkbox changes are retained through sheet rerenders and cleared on successful Save.
+Validated with 29 Node tests and 9 Python tests plus syntax, template, manifest, module-path and ZIP checks. A non-persistent real-model regression macro is provided at tools/runtime/survivor-defaults.js in the repository. Foundry 14.365 runtime execution remains pending; offline tests use API doubles and do not certify runtime validation.
 
-Validated with 28 Node tests and 9 Python tests plus syntax, template, manifest, module-path and ZIP checks. Targets Foundry 14.365 only. Foundry/Forge runtime and visual verification remain pending. See docs/survivor-sheet.md for acceptance checks.
+After updating, confirm version 0.1.3, restart/reload Foundry and create a Survivor through the normal Actor dialog.
