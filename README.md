@@ -68,3 +68,9 @@ The Survivor sheet uses Attributes, Gear and Specials tabs with editable printed
 Survivor Family and Image tabs, Proficiency Items and the associated manual acceptance checklist are documented in [Family, Proficiency and images](docs/family-proficiency-images.md). These feature changes require runtime validation on Foundry 14.365; release publication remains a separate step.
 
 See [Survivor UI and drop-target checklist](docs/survivor-drag-drop.md) for compact Proficiency links, image gear cards, inventory operations and pending Foundry runtime checks.
+
+### Survivor drop repair and Living Glossary
+
+The Survivor header now keeps Save Changes beside Sex; Hunt XP uses a 10+6 track, and Survival is bounded by its entered limit. See the [14.365 Forge runtime checklist](docs/survivor-drag-drop.md) before relying on the native drag/drop repair in play.
+
+GMs can open **Configure Settings → Kingdom Death: Monster → Open Living Glossary Manager** to import authorized JSON into native Journal pages. See [source-access findings, JSON format and Forge instructions](docs/living-glossary.md). Website scraping is not enabled; only an original demonstration dataset is included.

@@ -361,3 +361,9 @@ test('Survival submission clamps simultaneous edits and preserves unrelated draf
   const data=sheet._processFormData(null,null,{object:{system:{survival:{value:9,limit:3},notes:'keep'}}});
   assert.deepEqual(data.system.survival,{value:3,limit:3});assert.equal(data.system.notes,'keep');
 });
+test('Living Glossary settings menu is GM restricted and template disables unavailable sync',()=>{
+  assert.equal(settings.find(s=>s[1]==='glossary')[2].restricted,true);
+  const html=render('living-glossary',{canSync:false,permissionError:'Only a GM can sync.'});
+  assert.match(html,/type="submit" disabled/);assert.match(html,/Only a GM/);
+  assert.match(render('living-glossary',{canSync:true}),/type="submit" >Sync Now/);
+});

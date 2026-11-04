@@ -1,3 +1,5 @@
+import { LivingGlossaryManager } from "./glossary/manager.mjs";
+import { LivingGlossaryApplication } from "./glossary/application.mjs";
 import { cleanupDeletedGear } from "./inventory/operations.mjs";
 import { KDMItem } from "./documents/item.mjs";
 import { SYSTEM_ID } from "./rules/constants.mjs";
@@ -24,7 +26,9 @@ Hooks.once("init", () => {
   game.settings.registerMenu(SYSTEM_ID, "campaign", {name: "Campaign Dashboard", label: "Open Campaign Dashboard",
     hint: "Create a Settlement Actor first. The GM selects the active settlement; participants need Observer access to view it.",
     icon: "fas fa-landmark", type: CampaignDashboard, restricted: false});
-  game.kingdomDeath = {campaign: new CampaignController(), version: game.system.version};
+  game.settings.registerMenu(SYSTEM_ID, "glossary", {name:"Living Glossary",label:"Open Living Glossary Manager",
+    hint:"Sync authorized JSON into native Journal pages. No automatic website retrieval.",icon:"fas fa-book",type:LivingGlossaryApplication,restricted:true});
+  game.kingdomDeath = {glossary:new LivingGlossaryManager(),campaign: new CampaignController(), version: game.system.version};
 });
 Hooks.once("ready", () => {
   if (game.user.isGM && game.version !== "14.365") ui.notifications.warn("Kingdom Death: Monster targets Foundry 14.365 only. This build has not been runtime verified.");

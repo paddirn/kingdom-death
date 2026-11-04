@@ -27,5 +27,5 @@ for (const file of ["scripts", "tools", "tests", "templates", "lang"].flatMap(d 
   }
   if (file.endsWith(".hbs")) { Handlebars.precompile(source); templates++; }
 }
-assert.equal(templates, 5);
+assert.equal(templates, 6);
 console.log(`Validated manifest structure, paths, ${modules} JS modules, ${templates} Handlebars templates and language JSON. Not a Foundry runtime test.`);
