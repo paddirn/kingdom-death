@@ -37,14 +37,14 @@ class Sheet {
 }
 const registered = [], once = new Map(), settings = [];
 globalThis.foundry = {
-  data: {fields: {ArrayField, NumberField: Field, StringField: Field, BooleanField: Field, SchemaField: Schema}},
+  data: {fields: {ArrayField, NumberField: Field, StringField: Field, FilePathField: Field, BooleanField: Field, SchemaField: Schema}},
   abstract: {TypeDataModel}, documents: {Actor: class Actor {}, Item: class Item {}},
   applications: {api: {HandlebarsApplicationMixin: Base => Base, ApplicationV2: Sheet},
     sheets: {ActorSheetV2: Sheet, ItemSheetV2: Sheet}, apps: {DocumentSheetConfig: {registerSheet: (...args) => registered.push(args)}}}
 };
 globalThis.Hooks = {once: (key, fn) => once.set(key, fn), on: () => {}};
 globalThis.CONFIG = {Actor: {dataModels: {}}, Item: {dataModels: {}}};
-globalThis.game = {system: {version: JSON.parse(fs.readFileSync(new URL("../system.json",import.meta.url))).version}, settings: {register: (...args) => settings.push(args), registerMenu: (...args) => settings.push(args)}, actors: {contents: []}};
+globalThis.game = {system: {version: JSON.parse(fs.readFileSync(new URL("../system.json",import.meta.url))).version}, settings: {get:()=>"", register: (...args) => settings.push(args), registerMenu: (...args) => settings.push(args)}, actors: {contents: []}};
 await import("../scripts/main.mjs");
 const { SurvivorData } = await import("../scripts/models/survivor.mjs");
 const { MonsterData } = await import("../scripts/models/monster.mjs");
@@ -147,7 +147,7 @@ test("survivor context filters special Items and preserves active tab", async ()
   const html=render("survivor",context);
   assert.match(html,/class="tab active" data-group="primary" data-tab="specials"/);
   assert.ok(html.indexOf('<h2>Fighting Arts')<html.indexOf('<h2>Disorders'));
-  for (const key of ["cannotUseFightingArts","impairments","skipNextHunt","oncePerLifetime","rerollUsed"]) assert.ok(html.includes(`name="system.${key}"`));
+  for (const key of ["cannotUseFightingArts","cannotUseAbilities","skipNextHunt","oncePerLifetime","rerollUsed"]) assert.ok(html.includes(`name="system.${key}"`));
 });
 test("rerenders restore only draft fields and retain checkbox false", async () => {
   const sheet=new SurvivorSheet(); sheet.isEditable=true; sheet.actor={system:{}};
@@ -183,7 +183,7 @@ test("new Survivor constructs with default values and passes offline validation 
 });
 test("refinement defaults validate and preserve old milestone fields", () => {
   const model=new SurvivorData();assert.equal(model.validate(),true);
-  assert.deepEqual(model.survivalActions,{dodge:false,encourage:false,surge:false,dash:false,endure:false});
+  assert.deepEqual(model.survivalActions,{dodge:false,encourage:false,surge:false,dash:false,endure:false,overcharge:false,embolden:false});
   assert.equal(model.courageChoice,'');assert.equal(model.understandingChoice,'');
   for (const [key,value] of [['courageChoice','prepared'],['understandingChoice','analyze']]) {
     assert.equal(new SurvivorData({[key]:value}).validate(),true);
@@ -200,7 +200,7 @@ test("refined layout places Hunt XP on right and retains Gear panel markup", asy
   assert.equal((html.match(/name="system.sex"/g)||[]).length,1);
   for(const key of ['dodge','encourage','surge','dash','endure']) assert.ok(html.includes(`name="system.survivalActions.${key}"`));
   for(const key of ['courageChoice','understandingChoice']) assert.equal((html.match(new RegExp(`name="system.${key}"`,'g'))||[]).length,4);
-  for(const text of ['Milestones: 2 / 6 / 10 / 15','Heavy Injury: Knocked Down (all locations)']) assert.ok(html.includes(text));
+  for(const text of ['Milestones: 2 (Age 1) / 6 (Age 2) / 10 (Age 3) / 15 (Age 4) / 16 (Retire)','Heavy Injury: Knocked Down (all locations)']) assert.ok(html.includes(text));
   assert.equal((html.match(/data-kdm-drop="gear"/g)||[]).length,9);
 });
 test("radio draft restores exactly one selection independently per group", async () => {
@@ -231,7 +231,7 @@ test('all five tabs, read-only progress totals and full-width counters render',a
   for(const path of ['huntXP','weaponProficiency.value','courage','understanding']) assert.ok(html.includes(`readonly min="0" step="1" name="system.${path}"`));
   for(let i=1;i<=5;i++) assert.ok(html.includes(`name="system.customTokens.token${i}.value"`));
   assert.ok(html.includes('>Male</option>'));assert.ok(html.includes('>Female</option>'));assert.ok(html.includes('value="" selected>Unspecified'));
-  assert.match(html, /<\/div><\/div>\s*<section class="kdm-conditions">/);
+  assert.match(html, /<\/section>\s*<section class="kdm-conditions">/);
   assert.ok(html.includes('data-image-path="img"'));assert.ok(html.includes('data-image-path="prototypeToken.texture.src"'));
 });
 test('progress actions immediately synchronize one authoritative total and track',()=>{
@@ -420,5 +420,55 @@ test('combined Specials retain independent types and fields while primary legacy
   const html=render('survivor',{actor:{},system:sheet.actor.system,editable:true,...context});
   assert.match(html,/Fighting Arts &amp; Abilities/);assert.match(html,/Disorders &amp; Impairments/);
   assert.ok(!html.includes('name="system.weaponProficiency.specialist"'));assert.ok(!html.includes('data-kdm-drop="ability"'));
-  assert.match(html,/name="system.impairments"/);assert.match(html,/name="system.skipNextHunt"/);
+  assert.ok(!html.includes('name="system.impairments"'));assert.match(html,/name="system.skipNextHunt"/);
+});
+test('injury and impairment defaults, indexed submission and legacy data round trip',async()=>{
+  const model=new SurvivorData();
+  assert.equal(model.validate(),true);
+  assert.equal(model.cannotUseAbilities,false);
+  assert.deepEqual(Object.values(model.impairmentFlags),Array(20).fill(false));
+  const expected={head:[1,1,2,1],arms:[2,1,5,2],body:[5,1,5],waist:[1,5,1,1],legs:[2,1,2]};
+  for(const [key,counts] of Object.entries(expected)) {
+    assert.deepEqual(Object.values(model.severeInjuries[key]).map(a=>a.length),counts);
+    assert.ok(Object.values(model.severeInjuries[key]).flat().every(v=>v===false));
+  }
+  const sheet=new SurvivorSheet();sheet.actor={system:model,items:{contents:[],filter:()=>[]}};
+  const submitted=sheet._processFormData(null,null,{object:{system:{severeInjuries:{arms:{contracture:{0:true,1:false,2:false,3:true,4:false}}}}}});
+  const saved=JSON.parse(JSON.stringify(submitted));
+  assert.deepEqual(saved.system.severeInjuries.arms.contracture,[true,false,false,true,false]);
+  assert.equal(saved.system.impairments,undefined);assert.equal(saved.system.locations,undefined);
+  model.impairments='Existing handwritten note';model.impairmentFlags.retire=true;
+  const html=render('survivor',await sheet._prepareContext({}));
+  assert.match(html,/Existing handwritten note/);assert.ok(!html.includes('name="system.impairments"'));
+  assert.equal((html.match(/name="system.impairmentFlags\./g)||[]).length,20);
+  assert.equal((html.match(/name="system.severeInjuries\./g)||[]).length,Number(Object.values(expected).flat().reduce((a,b)=>a+b)));
+  for(const key of ['hit','wound','miss','crit','Attack']) assert.ok(html.includes('<strong>'+key+'</strong>'));
+  assert.match(html,/Cannot use\/gain Survival/);assert.match(html,/name="system.survivalActions.embolden"/);
+});
+test('inventory view excludes non-inventory Items and icons can be overridden independently',async()=>{
+  const types=['gear','resource','fightingArt','ability','disorder','proficiency'];
+  const contents=types.map(type=>({id:type,type,name:type,system:{quantity:1}}));
+  const sheet=new SurvivorSheet();sheet.actor={system:new SurvivorData(),items:{contents,filter:fn=>contents.filter(fn)}};
+  const previous=game.settings.get;
+  try {
+    game.settings.get=(scope,key)=>key==='injuryIcon_head'?'custom/head.webp':'';
+    const context=await sheet._prepareContext({});
+    assert.deepEqual(context.inventory.map(i=>i.id),['gear','resource']);assert.equal(contents.length,6);
+    const html=render('survivor',context);
+    assert.match(html,/src="custom\/head.webp"/);assert.match(html,/anatomy.svg#arms/);
+    for(const key of ['head','arms','body','waist','legs']) {
+      const setting=settings.find(s=>s[1]==='injuryIcon_'+key)[2];
+      assert.equal(setting.scope,'world');assert.equal(setting.default,'');assert.equal(setting.restricted,true);
+    }
+  } finally {game.settings.get=previous;}
+});
+test('Item preview and revised editable fields have distinct markup and safe data paths',()=>{
+  const gear=render('item',{isGear:true,item:{},system:{attack:{accuracy:4}},sides:[{side:'left',colors:[{value:'red',selected:true}]}]});
+  assert.match(gear,/<button type="button"[^>]*data-action="previewImage"/);assert.ok(!gear.includes('Kingdom Death: Monster · Item'));
+  assert.match(gear,/name="system.attack.accuracy" value="4"/);assert.match(gear,/aria-hidden="true" class="kdm-plus">\+/);
+  assert.match(gear,/class="edge-left"/);assert.match(gear,/value="red" selected/);
+  assert.match(gear,/Description<textarea name="system.notes"/);
+  const proficiency=render('item',{isProficiency:true,system:{notes:'Private legacy note'},ranks:[{value:'specialist',selected:true}]});
+  assert.match(proficiency,/Private legacy note/);assert.ok(!proficiency.includes('name="system.notes"'));
+  assert.match(proficiency,/kdm-type-rank/);assert.match(proficiency,/name="system.description"/);
 });

@@ -216,4 +216,7 @@
 .kdm-accuracy {display:inline-flex;align-items:center;position:relative}
 .kdm-accuracy input.kdm-number {padding-right:12px}
 .kdm-accuracy .kdm-plus {position:absolute;right:26px;pointer-events:none}
-@container (max-width:450px) {.kingdom-death .kdm-item-header,.kingdom-death .kdm-type-rank {grid-template-columns:1fr}}
+@container (max-width:335px) {.kingdom-death .kdm-item-header,.kingdom-death .kdm-type-rank {grid-template-columns:1fr}}
+.kingdom-death .kdm-item-fields {container-type:inline-size}
+.kdm-accuracy {justify-self:start}
+.kdm-accuracy:has(input.kdm-number-display) .kdm-plus {right:4px}
