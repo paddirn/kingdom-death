@@ -2,7 +2,7 @@ import { LivingGlossaryManager } from "./glossary/manager.mjs";
 import { LivingGlossaryApplication } from "./glossary/application.mjs";
 import { cleanupDeletedGear } from "./inventory/operations.mjs";
 import { KDMItem } from "./documents/item.mjs";
-import { SYSTEM_ID } from "./rules/constants.mjs";
+import { SYSTEM_ID, LOCATIONS } from "./rules/constants.mjs";
 import { SurvivorData } from "./models/survivor.mjs";
 import { MonsterData } from "./models/monster.mjs";
 import { SettlementData } from "./models/settlement.mjs";
@@ -22,6 +22,18 @@ Hooks.once("init", () => {
     registry.registerSheet(foundry.documents.Actor, SYSTEM_ID, cls, {types: [type], makeDefault: true, label: `TYPES.Actor.${type}`});
   }
   registry.registerSheet(foundry.documents.Item, SYSTEM_ID, KDMItemSheet, {types: Object.keys(itemModels), makeDefault: true, label: "Kingdom Death: Monster"});
+  for (const [key,label] of Object.entries(LOCATIONS)) {
+    game.settings.register(SYSTEM_ID, `injuryIcon_${key}`, {
+      name: `${label} injury icon`, hint: "Leave empty to use the system icon.",
+      scope: "world", config: true, restricted: true, default: "",
+      type: new foundry.data.fields.FilePathField({categories:["IMAGE"], blank:true, initial:""}),
+      onChange: () => {
+        for (const actor of game.actors.contents.filter(actor => actor.type === "survivor")) {
+          for (const app of Object.values(actor.apps)) if (app.rendered) app.render({force:false});
+        }
+      }
+    });
+  }
   game.settings.register(SYSTEM_ID, "activeSettlement", {scope: "world", config: false, type: String, default: ""});
   game.settings.registerMenu(SYSTEM_ID, "campaign", {name: "Campaign Dashboard", label: "Open Campaign Dashboard",
     hint: "Create a Settlement Actor first. The GM selects the active settlement; participants need Observer access to view it.",

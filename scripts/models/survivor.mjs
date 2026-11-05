@@ -1,3 +1,4 @@
+import { severeInjuries, impairments } from "../rules/injury-records.mjs";
 import { clampSurvival, validateSurvival } from "../rules/survival.mjs";
 import { ATTRIBUTES, LOCATIONS, SLOTS } from "../rules/constants.mjs";
 import { fields, common, schema, count, number, bool, slots, text } from "./fields.mjs";
@@ -16,9 +17,16 @@ export class SurvivorData extends foundry.abstract.TypeDataModel {
   }
   static defineSchema() {
     return {...common(),
+      cannotUseAbilities: bool(),
+      impairmentFlags: schema(Object.fromEntries(Object.keys(impairments).map(key => [key,bool()]))),
+      severeInjuries: schema(Object.fromEntries(Object.entries(severeInjuries).map(([location, records]) => [
+        location, schema(Object.fromEntries(records.map(([key,,count]) => [
+          key, new fields.ArrayField(bool(), {initial: Array(count).fill(false)})
+        ])))
+      ]))),
       proficiencyUuid: text({blank: true}), additionalProficiencies: new fields.ArrayField(text({blank:false}), {initial:[]}),
       family: schema({parents: schema({parent1: text({blank:true}), parent2: text({blank:true})}), children: new fields.ArrayField(text({blank:false}), {initial: []})}),
-      customTokens: schema(Object.fromEntries(Array.from({length:5}, (_,i)=>[`token${i+1}`, schema({label:text({blank:true,initial:"_ tokens"}),value:count()})]))), survivalActions: schema({dodge: bool(), encourage: bool(), surge: bool(), dash: bool(), endure: bool()}),
+      customTokens: schema(Object.fromEntries(Array.from({length:5}, (_,i)=>[`token${i+1}`, schema({label:text({blank:true,initial:"_ tokens"}),value:count()})]))), survivalActions: schema({dodge: bool(), encourage: bool(), surge: bool(), dash: bool(), endure: bool(), overcharge: bool(), embolden: bool()}),
       courageChoice: text({blank: true, choices: ["", "stalwart", "prepared", "matchmaker"]}),
       understandingChoice: text({blank: true, choices: ["", "analyze", "explore", "tinker"]}), sex: text({blank: true, choices: ["", "M", "F"]}), cannotSpendSurvival: bool(), cannotUseFightingArts: bool(),
       impairments: text({blank: true}), skipNextHunt: bool(), oncePerLifetime: text({blank: true}), rerollUsed: bool(),
