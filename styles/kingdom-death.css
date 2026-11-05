@@ -187,3 +187,18 @@
 .kingdom-death .kdm-radio-group[aria-label="Rank"] {display:flex;flex-direction:row;gap:1rem;}
 .kdm-additional-proficiencies {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;}
 .kdm-survivor .tab[data-tab=specials] > section:last-child {grid-column:1 / -1;}
+.kdm-progress-pair,.kdm-injury-row {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.kdm-progress-pair > section {margin:0}
+.kdm-survivor .kdm-injury-row {gap:0;border-bottom:1px solid var(--kdm-border)}
+.kdm-injury-row .kdm-location {border:0;flex-wrap:wrap}
+.kdm-severe {display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;padding:8px;border-left:1px solid var(--kdm-border)}
+.kdm-severe span {display:inline-flex;align-items:center;flex-wrap:wrap}
+.kdm-impairments {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.kdm-impairments label {display:flex;align-items:flex-start}
+.kdm-survivor [data-kdm-drop=additionalProficiency] h3 {font-size:0.9rem}
+.kdm-stat-boxes small {display:block;min-height:1em}
+@container (max-width:650px) {
+  .kdm-progress-pair,.kdm-injury-row {grid-template-columns:1fr}
+  .kdm-severe {border-left:0}
+  .kdm-impairments {grid-template-columns:repeat(auto-fit,minmax(105px,1fr))}
+}

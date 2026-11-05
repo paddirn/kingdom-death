@@ -1,3 +1,4 @@
+import { severeInjuries, impairments, captions, labelParts } from "../rules/injury-records.mjs";
 import { clampSurvival } from "../rules/survival.mjs";
 import { bindSurvival } from "../ui/survival.mjs";
 import { receiveItem, clearGear, deleteInventoryItem } from "../inventory/operations.mjs";
@@ -90,10 +91,12 @@ export class SurvivorSheet extends KDMActorSheet {
       try {const item=await resolveProficiency(uuid);return {uuid,name:item.name,available:true};}
       catch {return {uuid,name:'Missing or inaccessible Proficiency',available:false};}
     }));
-    return {...context, additionalProficiencies, specials:[...owned('fightingArt').map(i=>({...i,label:'fighting art'})),...owned('ability').map(i=>({...i,label:'ability'}))], family:familyContext(this.actor,game.actors.contents),
+    return {...context, inventory: context.inventory.filter(item=>['gear','resource'].includes(item.itemType)),
+      impairments: Object.entries(impairments).map(([key,label])=>({key,parts:labelParts(label),checked:this.actor.system.impairmentFlags?.[key]})),
+      additionalProficiencies, specials:[...owned('fightingArt').map(i=>({...i,label:'fighting art'})),...owned('ability').map(i=>({...i,label:'ability'}))], family:familyContext(this.actor,game.actors.contents),
       customTokens:Object.entries(this.actor.system.customTokens ?? {}).map(([key,token])=>({key,...token})),
       proficiencyUuid, proficiencyAvailable:!!proficiency, proficiencyName:proficiency?.name ?? (proficiencyUuid ? "Missing or inaccessible Proficiency" : "No linked Proficiency"),
-      survivalActions: ["dodge", "encourage", "surge", "dash", "endure"].map(key => ({key, label: key[0].toUpperCase() + key.slice(1), checked: this.actor.system.survivalActions?.[key] ?? false})),
+      survivalActions: ["dodge", "encourage", "surge", "dash", "endure", "overcharge", "embolden"].map(key => ({key, label: key[0].toUpperCase() + key.slice(1), checked: this.actor.system.survivalActions?.[key] ?? false})),
       courageOptions: choiceGroup("courageChoice", [["stalwart","Stalwart","Can't be knocked down by brain trauma or intimidate."],["prepared","Prepared","Add Hunt XP to your roll when determining a straggler."],["matchmaker","Matchmaker","Spend 1 endeavor to trigger Intimacy story event."]]),
       understandingOptions: choiceGroup("understandingChoice", [["analyze","Analyze","Look at top AI card and return it to the top of the deck."],["explore","Explore","Add +2 to your investigate roll results."],["tinker","Tinker","+1 endeavor when a returning survivor."]]),
       active: {[this.tabGroups.primary]: true},
@@ -103,8 +106,11 @@ export class SurvivorSheet extends KDMActorSheet {
       understandingTrack: track("understanding", this.actor.system.understanding, 9, [3,9]),
       proficiencyTrack: track("weaponProficiency.value", this.actor.system.weaponProficiency?.value ?? 0, 8, [3,8]),
       arts: owned("fightingArt"), disorders: owned("disorder"), abilities: owned("ability"),
-      attributes: Object.entries(ATTRIBUTES).map(([key,label]) => ({key,label: label.replace(" modifier", ""),value: this.actor.system.attributes[key]})),
-      locations: Object.entries(LOCATIONS).map(([key,label]) => ({key,label,hasLight: key !== "head", ...this.actor.system.locations[key]})),
+      attributes: Object.entries(ATTRIBUTES).map(([key,label]) => ({key,caption:labelParts(captions[key]),label: label.replace(" modifier", ""),value: this.actor.system.attributes[key]})),
+      locations: Object.entries(LOCATIONS).map(([key,label]) => ({key,label,hasLight: key !== "head", ...this.actor.system.locations[key],
+        injuries: severeInjuries[key].map(([id,title,count])=>({title,boxes:Array.from({length:count},(_,i)=>({
+          name:`system.severeInjuries.${key}.${id}.${i}`,label:`${label}: ${title} ${i+1} of ${count}`,checked:this.actor.system.severeInjuries?.[key]?.[id]?.[i] ?? false
+        }))}))})),
       cells: gridCells(this.actor.system.gearGrid, gear)};
   }
   updateSexBar(value) {
@@ -205,6 +211,13 @@ export class SurvivorSheet extends KDMActorSheet {
   }
   _processFormData(event, form, formData) {
     const data = super._processFormData(event, form, formData);
+    // Form expansion may represent indexed checkbox paths as an object. Save dense Boolean arrays.
+    for (const [location,records] of Object.entries(severeInjuries)) {
+      for (const [key,,count] of records) {
+        const group=data.system.severeInjuries?.[location];
+        if (group?.[key]) group[key]=Array.from({length:count},(_,i)=>group[key][i]===true);
+      }
+    }
     // Grid assignments save immediately. Do not submit an old hidden copy over a newer drop.
     const grid=this.actor.system?.gearGrid ?? data.system.gearGrid;
     validateGrid(grid, this.actor.items.contents);

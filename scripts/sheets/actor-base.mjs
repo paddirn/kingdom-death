@@ -14,7 +14,7 @@ export class KDMActorSheet extends api.HandlebarsApplicationMixin(sheets.ActorSh
     const context = await super._prepareContext(options);
     return {...context, actor: this.actor, system: this.actor.system, editable: this.isEditable,
       inventory: this.actor.items.contents.toSorted((a,b) => a.sort - b.sort).map(item => ({id: item.id, name: item.name, img: item.img,
-        type: game.i18n.localize(`TYPES.Item.${item.type}`), quantity: item.type === "resource" ? item.system.quantity : null}))};
+        itemType: item.type, type: game.i18n.localize(`TYPES.Item.${item.type}`), quantity: item.type === "resource" ? item.system.quantity : null}))};
   }
   static async addItem(event, target) {
     if (!this.isEditable) return;
