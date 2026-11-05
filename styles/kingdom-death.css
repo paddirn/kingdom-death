@@ -203,3 +203,17 @@
   .kdm-impairments {grid-template-columns:repeat(auto-fit,minmax(105px,1fr))}
 }
 .kdm-survivor img.kdm-anatomy {object-fit:contain;border:0;background:none;box-shadow:none}
+.kingdom-death .kdm-item-header,.kingdom-death .kdm-type-rank {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:10px}
+.kingdom-death .kdm-type-rank {grid-template-columns:minmax(90px,1fr) auto;align-items:center}
+.kingdom-death .kdm-item-image .kdm-preview-link {width:auto;height:auto;aspect-ratio:auto;border:0;background:transparent;text-decoration:underline}
+.kingdom-death .kdm-edge-cross {display:grid;grid-template-areas:". top ." "left . right" ". bottom .";grid-template-columns:repeat(3,minmax(0,1fr))}
+.edge-top {grid-area:top}.edge-left {grid-area:left}.edge-right {grid-area:right}.edge-bottom {grid-area:bottom}
+.kdm-edge-cross select {text-align:center}
+.kdm-edge-cross select:has(option[value=red]:checked) {background:#902c32;color:white;font-weight:bold}
+.kdm-edge-cross select:has(option[value=blue]:checked) {background:#245a96;color:white;font-weight:bold}
+.kdm-edge-cross select:has(option[value=green]:checked) {background:#28623b;color:white;font-weight:bold}
+.kingdom-death .kdm-attack-fields label {display:grid;grid-template-columns:6em auto;justify-content:start;align-items:center}
+.kdm-accuracy {display:inline-flex;align-items:center;position:relative}
+.kdm-accuracy input.kdm-number {padding-right:12px}
+.kdm-accuracy .kdm-plus {position:absolute;right:26px;pointer-events:none}
+@container (max-width:450px) {.kingdom-death .kdm-item-header,.kingdom-death .kdm-type-rank {grid-template-columns:1fr}}
