@@ -107,7 +107,7 @@ export class SurvivorSheet extends KDMActorSheet {
       proficiencyTrack: track("weaponProficiency.value", this.actor.system.weaponProficiency?.value ?? 0, 8, [3,8]),
       arts: owned("fightingArt"), disorders: owned("disorder"), abilities: owned("ability"),
       attributes: Object.entries(ATTRIBUTES).map(([key,label]) => ({key,caption:labelParts(captions[key]),label: label.replace(" modifier", ""),value: this.actor.system.attributes[key]})),
-      locations: Object.entries(LOCATIONS).map(([key,label]) => ({key,label,hasLight: key !== "head", ...this.actor.system.locations[key],
+      locations: Object.entries(LOCATIONS).map(([key,label]) => ({key,label,icon:game.settings.get("kingdom-death", `injuryIcon_${key}`),hasLight: key !== "head", ...this.actor.system.locations[key],
         injuries: severeInjuries[key].map(([id,title,count])=>({title,boxes:Array.from({length:count},(_,i)=>({
           name:`system.severeInjuries.${key}.${id}.${i}`,label:`${label}: ${title} ${i+1} of ${count}`,checked:this.actor.system.severeInjuries?.[key]?.[id]?.[i] ?? false
         }))}))})),

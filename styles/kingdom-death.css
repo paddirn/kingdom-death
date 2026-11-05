@@ -202,3 +202,4 @@
   .kdm-severe {border-left:0}
   .kdm-impairments {grid-template-columns:repeat(auto-fit,minmax(105px,1fr))}
 }
+.kdm-survivor img.kdm-anatomy {object-fit:contain;border:0;background:none;box-shadow:none}
