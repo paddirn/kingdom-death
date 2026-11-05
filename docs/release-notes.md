@@ -1,11 +1,11 @@
-# v0.1.7 — Survivor drop repair and Living Glossary
+# v0.1.8 — Proficiency, Specials and shared keyword tags
 
-Repairs a drag-feedback veto that could suppress unresolved external Item drops and explicitly connects the native V14 drag/drop controller. Preserves inventory/grid operations and Family routing, with single-event handling and visible invalid-drop feedback.
+Proficiency Items now offer None, Specialist and Master on one horizontal row. Saved names follow Type and Rank, with a safe fallback for blank Type. Existing specialization/mastery ranks map to specialist/master without recreating Items or changing UUIDs.
 
-Moves Save Changes into the persistent Survivor header, arranges Hunt XP as 10+6 boxes and enlarges read-only progression totals. Adds live Survival clamping, submission normalization and model cleaning/joint validation for zero ≤ Current ≤ Limit.
+Survivors gain additional Proficiency links in a separate two-column list, with duplicate prevention, unlinking and missing-reference handling. Primary XP remains; legacy specialist/master Boolean values remain stored but hidden. Specials combines Fighting Arts and Abilities with type labels and moves Skip Next Hunt and Impairments into Disorders. Once Per Lifetime spans both columns.
 
-Adds a GM-only Living Glossary manager under Configure Settings. Import authorized normalized JSON into native Journal pages, with stable IDs, incremental updates/renames, preserved manual pages, concurrent-sync guards and partial-failure reports. Includes an original sample and schema, not copyrighted glossary content. Live website scraping is not enabled because source permission for a persistent mirror was not established.
+All Item types use Enter-to-add keyword tags with removal and draft preservation. Source is the last editable field. Legacy nonempty keyword strings become one trimmed tag, preserving punctuation; arrays deduplicate case-insensitively while retaining first spelling/order. Missing fields default to empty arrays. Canonical migration values persist on ordinary Item saves; no destructive bulk rewrite occurs.
 
-Validation: 85 JavaScript tests and 9 Python packaging tests, plus syntax, module paths, templates, manifest and ZIP inspection. Targets Foundry 14.365 only. Actual Foundry rendering, native drag delivery and reload persistence remain unverified. Published V14 docs currently describe 14.370; no newer target is introduced.
+Validation: 92 JavaScript tests and 9 Python packaging tests, plus syntax, templates, module paths, manifest and ZIP inspection. Target remains Foundry 14.365. Actual Foundry rendering, migration and save/reload persistence remain runtime-unverified.
 
-After updating on Forge, restart the game and reload clients. Follow docs/survivor-drag-drop.md for exact runtime tests and docs/living-glossary.md for import instructions. Back up your world first. Client-side operation queues and glossary sync guards are not server transactions across disconnected devices.
+Back up the world, update on Forge, restart the game and reload clients. Follow docs/proficiency-keywords.md for migration details and manual checks of old world/embedded Items, ranks/sidebar names, keyword Enter handling, additional links, permissions and persistence. The existing release and installation workflow is retained.

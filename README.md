@@ -1,6 +1,6 @@
 # Kingdom Death: Monster for Foundry VTT
 
-Unofficial, content-free foundation for a board-game-oriented system. System ID: `kingdom-death`. Version: **0.1.7**. Target: **Foundry V14 build 365 (14.365)**, hosted on The Forge.
+Unofficial, content-free foundation for a board-game-oriented system. System ID: `kingdom-death`. Version: **0.1.8**. Target: **Foundry V14 build 365 (14.365)**, hosted on The Forge.
 
 **Runtime verification pending.** The manifest declares `minimum`, `verified`, and `maximum` as `14.365`, per the requested installation metadata correction. Foundry uses `verified` for its compatibility label; setting it may produce a verified badge, but it is **not evidence of successful runtime testing**. No Forge installation, world creation, gameplay, or multiplayer test has passed here. The target has not changed. See [installation investigation](docs/installation-investigation.md).
 
@@ -23,11 +23,11 @@ In Foundry Setup → Game Systems → Install System, paste:
 
 `https://github.com/paddirn/kingdom-death/releases/latest/download/system.json`
 
-On Forge, use its custom manifest installation option. The manifest and versioned ZIP are hosted as GitHub release assets. Version 0.1.7 targets **14.365 only**, and remains runtime-unverified. The ZIP import alternative is below.
+On Forge, use its custom manifest installation option. The manifest and versioned ZIP are hosted as GitHub release assets. Version 0.1.8 targets **14.365 only**, and remains runtime-unverified. The ZIP import alternative is below.
 
 ## Install on The Forge (ZIP)
 
-1. Download the built `kingdom-death-0.1.7.zip`. Do not use GitHub's source ZIP if you want the curated package. To reproduce it: Node.js 22+, Python 3, `npm ci`, then `npm run build`. Output is in `dist/`.
+1. Download the built `kingdom-death-0.1.8.zip`. Do not use GitHub's source ZIP if you want the curated package. To reproduce it: Node.js 22+, Python 3, `npm ci`, then `npm run build`. Output is in `dist/`.
 2. In Forge **Games Configuration**, stop the intended game/server and select **Foundry V14 build 365** if that build is available to your account. Do not downgrade an existing newer-version world. Create a separate test world. If Forge does not offer 365, that exact target cannot be verified there; ask Forge support before substituting a newer build.
 3. Under **Table Tools → Summon Import Wizard**, turn **Install found packages from the Bazaar** off. Select **ZIP file**, choose the built ZIP, then **Analyze** and finish the import. The archive contains one `kingdom-death/` directory with `system.json` directly inside it.
 4. Stop/start your Foundry server so it discovers the system. In Foundry Setup, create a new world and select **Kingdom Death: Monster** as its system. Forge Game Manager users can create/select the world through their game configuration instead.
