@@ -220,3 +220,31 @@
 .kingdom-death .kdm-item-fields {container-type:inline-size}
 .kdm-accuracy {justify-self:start}
 .kdm-accuracy:has(input.kdm-number-display) .kdm-plus {right:4px}
+
+/* Monster record and setup diagram */
+.kdm-monster .window-content {container-type:inline-size}
+.kdm-monster .tab {display:none}
+.kdm-monster .tab.active {display:block}
+.kdm-monster-header {display:flex;align-items:end;gap:12px;position:sticky;top:0;background:var(--kdm-bg);z-index:2}
+.kdm-monster-header label {flex:1}
+.kdm-monster-header button {width:auto}
+.kdm-monster-stats {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.kdm-monster-stat {text-align:center;min-width:0}
+.kdm-stat-control {display:block;position:relative}
+.kdm-monster .kdm-monster-stat input {height:52px;width:100%;text-align:center;font-size:24px}
+.kdm-monster .kdm-monster-stat .kdm-stepper {display:grid;grid-template-columns:1fr 1fr}
+.kdm-monster .kdm-monster-stat .kdm-stepper input {grid-column:1 / -1;grid-row:1}
+.kdm-monster .kdm-monster-stat .kdm-stepper button {grid-row:2}
+.kdm-positive-sign {display:none;position:absolute;left:8px;top:13px;pointer-events:none}
+.kdm-monster-stat.positive .kdm-positive-sign {display:block}
+.kdm-instinct {display:grid;grid-template-columns:100px minmax(0,1fr);gap:12px}
+.kdm-instinct button {height:130px;padding:0}
+.kdm-instinct img {width:100%;height:100%;object-fit:contain;border:0}
+.kdm-showdown-grid {display:grid;grid-template-columns:repeat(22,minmax(0,1fr));gap:1px}
+.kdm-monster .kdm-showdown-grid button {aspect-ratio:1;width:100%;height:auto;min-height:0;padding:0;margin:0;border:0;border-radius:0}
+.kdm-monster .kdm-showdown-grid button:focus-visible {outline:2px solid white;outline-offset:-2px}
+.kdm-setup-legend {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+.kdm-setup-legend label {display:flex;align-items:center;gap:6px}
+.kdm-color-swatch {width:20px;height:20px;flex:none}
+.kdm-aftermath {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@container (max-width:500px) {.kdm-aftermath {grid-template-columns:1fr}}

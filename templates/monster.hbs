@@ -1,4 +1,41 @@
-<div class="kdm-body"><fieldset {{#unless editable}}disabled{{/unless}}><header class="kdm-header"><p class="kdm-eyebrow">Kingdom Death: Monster · Foundation</p><label>Name <input name="name" value="{{actor.name}}" required></label></header>
-<section><h2>Monster record</h2><p class="kdm-hint">Enter privately owned monster data. Zero values are placeholders, not a playable monster profile. Wounds are a manual tally, not hit points.</p><div class="kdm-stats">{{#each stats}}<label>{{key}}<input type="number" step="1" name="system.{{key}}" value="{{value}}"></label>{{/each}}</div></section>
+<div class="kdm-body">
+<header class="kdm-monster-header">
+<label>Name<input name="name" value="{{actor.name}}" required {{#unless editable}}disabled{{/unless}}></label>
+{{#if editable}}<button type="submit">Save Changes</button>{{/if}}
+</header>
+<nav class="tabs kdm-tabs" data-group="primary" aria-label="Monster tabs">
+<button type="button" data-action="tab" data-group="primary" data-tab="attributes" class="{{#if active.attributes}}active{{/if}}">Attributes</button>
+<button type="button" data-action="tab" data-group="primary" data-tab="setup" class="{{#if active.setup}}active{{/if}}">Setup</button>
+</nav>
+<fieldset {{#unless editable}}disabled{{/unless}}>
+<div class="tab {{#if active.attributes}}active{{/if}}" data-group="primary" data-tab="attributes">
+<section><h2>Monster Record</h2>
+<div class="kdm-monster-stats">{{#each stats}}
+<label class="kdm-monster-stat"><span>{{label}}</span><span class="kdm-stat-control">
+<input type="number" step="1" name="system.{{key}}" value="{{value}}" {{#if signed}}data-signed{{/if}}>
+{{#if signed}}<span class="kdm-positive-sign" aria-hidden="true">+</span>{{/if}}
+</span></label>{{/each}}</div><small>Wnd records wounds suffered.</small>{{#if legacyAttributes}}<details><summary>Previous out-of-range attributes</summary>{{#each legacyAttributes}}<p>{{key}}: {{value}}</p>{{/each}}</details>{{/if}}
+</section>
+<section><h2>Instinct</h2><div class="kdm-instinct">
+<button type="button" data-action="instinctImage" aria-label="Choose Instinct image">
+{{#if instinctImage}}<img src="{{instinctImage}}" alt="Instinct">{{else}}Choose image{{/if}}
+</button><label>Effects<textarea name="system.instinct.description" rows="5">{{system.instinct.description}}</textarea></label>
+</div></section>
 <section class="kdm-placeholder"><h2>AI &amp; Hit Location decks</h2><p>Future milestone: draw, discard, reshuffle, and wound handling. Use Foundry's Cards directory to create private decks. These fields reserve links; no deck actions run yet.</p><label>AI deck UUID<input name="system.decks.ai" value="{{system.decks.ai}}" placeholder="Cards.…"></label><label>Hit Location deck UUID<input name="system.decks.hitLocation" value="{{system.decks.hitLocation}}" placeholder="Cards.…"></label><button type="button" disabled>AI draw — planned</button><button type="button" disabled>Hit location draw — planned</button></section>
-<label class="kdm-notes">Game notes (visible to document viewers)<textarea name="system.notes" rows="4">{{system.notes}}</textarea></label><section><h2>Inventory &amp; records</h2><p class="kdm-hint">Drop Items here from the Items directory or a compendium. Edit opens the owned copy. Save changes before adding or editing items.</p><div class="kdm-actions"><button type="button" data-action="addItem" data-type="gear">Add gear</button><button type="button" data-action="addItem" data-type="resource">Add resource</button></div><ul class="kdm-inventory">{{#each inventory}}<li data-item-id="{{id}}"><span>{{name}} <small>{{type}}{{#if (eq type "Resource")}} · {{quantity}}{{/if}}</small></span><button type="button" data-action="editItem" data-item-id="{{id}}">Edit</button><button type="button" data-action="deleteItem" data-item-id="{{id}}">Remove</button></li>{{else}}<li>No items yet.</li>{{/each}}</ul></section></fieldset>{{#if editable}}<footer><button type="submit"><i class="fas fa-save"></i> Save changes</button></footer>{{else}}<p>Read-only. Ask the GM for ownership to edit.</p>{{/if}}</div>
+<section><h2>Rewards</h2><p class="kdm-hint">Drop Items here from the Items directory or a compendium. Edit opens the owned copy. </p><div class="kdm-actions"><button type="button" data-action="addItem" data-type="gear">Add gear</button><button type="button" data-action="addItem" data-type="resource">Add resource</button></div><ul class="kdm-inventory">{{#each inventory}}<li data-item-id="{{id}}"><span>{{name}} <small>{{type}}{{#if (eq type "Resource")}} · {{quantity}}{{/if}}</small></span><button type="button" data-action="editItem" data-item-id="{{id}}">Edit</button><button type="button" data-action="deleteItem" data-item-id="{{id}}">Remove</button></li>{{else}}<li>No items yet.</li>{{/each}}</ul></section>
+<section><h2>Description</h2><textarea name="system.notes" aria-label="Description" rows="5">{{system.notes}}</textarea></section>
+</div>
+<div class="tab {{#if active.setup}}active{{/if}}" data-group="primary" data-tab="setup">
+<section><h2>Showdown Setup</h2>
+<div class="kdm-showdown-grid" role="group" aria-label="Showdown setup diagram">
+{{#each cells}}<button type="button" data-action="setupCell" data-cell-index="{{index}}" data-state="{{value}}" style="background-color:{{color}}" aria-label="{{label}}"></button>{{/each}}
+</div>
+<div class="kdm-setup-legend">{{#each legend}}<label><span class="kdm-color-swatch" style="background-color:{{color}}" aria-hidden="true"></span><input aria-label="{{key}} legend" name="system.showdownSetup.legend.{{key}}" value="{{value}}"></label>{{/each}}</div>
+</section>
+<section><h2>Terrain &amp; Deployment</h2><textarea name="system.terrainDeployment" aria-label="Terrain and Deployment" rows="5">{{system.terrainDeployment}}</textarea></section>
+<section><h2>Aftermath</h2><div class="kdm-aftermath">
+<label>Victory<textarea name="system.aftermath.victory" rows="5">{{system.aftermath.victory}}</textarea></label>
+<label>Defeat<textarea name="system.aftermath.defeat" rows="5">{{system.aftermath.defeat}}</textarea></label>
+</div></section>
+</div></fieldset>
+</div>

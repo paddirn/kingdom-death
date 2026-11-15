@@ -472,3 +472,60 @@ test('Item preview and revised editable fields have distinct markup and safe dat
   assert.match(proficiency,/Private legacy note/);assert.ok(!proficiency.includes('name="system.notes"'));
   assert.match(proficiency,/kdm-type-rank/);assert.match(proficiency,/name="system.description"/);
 });
+test('Monster schema defaults, legacy recovery and stat bounds',()=>{
+  const schema=MonsterData.defineSchema();
+  const data=defaults(schema);
+  const cells=schema.showdownSetup.fields.cells.options.initial();
+  assert.equal(cells.length,352);assert.ok(cells.every(value=>value===0));
+  assert.equal(schema.showdownSetup.fields.cells.options.validate(cells),true);
+  for(const [key,min,max] of [['level',1,4],['movement',0,99],['toughness',0,99],['speed',-99,99],['damage',-99,99]]) {
+    assert.equal(schema[key].options.min,min);assert.equal(schema[key].options.max,max);assert.equal(schema[key].options.integer,true);
+  }
+  assert.equal(schema.wounds.options.max,undefined);
+  assert.equal(new MonsterData().validate(),true);
+  const old=MonsterData.migrateData({level:0,speed:-120,notes:'keep',decks:{ai:'Cards.ai',hitLocation:'Cards.hl'}});
+  assert.equal(old.level,1);assert.equal(old.legacyAttributes.level,'0');assert.equal(old.speed,-99);
+  assert.equal(old.notes,'keep');assert.equal(old.decks.ai,'Cards.ai');
+  for(const text of [data.instinct.image,data.instinct.description,data.terrainDeployment,data.aftermath.victory,data.aftermath.defeat]) assert.equal(text,'');
+});
+test('Monster context renders 352 accessible cells and preserves Rewards and descriptions',async()=>{
+  const {MonsterSheet}=await import('../scripts/sheets/monster.mjs');
+  const sheet=new MonsterSheet();sheet.isEditable=true;
+  sheet.actor={system:new MonsterData(),items:{contents:[]}};
+  const context=await sheet._prepareContext({});
+  assert.deepEqual(context.stats.map(s=>s.key),['level','movement','toughness','speed','damage','wounds']);
+  const html=render('monster',context);
+  assert.equal((html.match(/data-cell-index=/g)||[]).length,352);
+  assert.equal((html.match(/name="system.showdownSetup.legend./g)||[]).length,4);
+  for(const path of ['notes','decks.ai','decks.hitLocation','instinct.description','terrainDeployment','aftermath.victory','aftermath.defeat']) assert.ok(html.includes('name="system.'+path+'"'));
+  assert.ok(html.includes('<h2>Rewards</h2>'));assert.ok(!html.includes('name="system.accuracy"'));
+  assert.match(render('monster',{...context,editable:false}),/<fieldset disabled>/);
+});
+test('Monster grid edits update one DOM cell, retain tab, reject Observer and restore after failed save',async()=>{
+  const {MonsterSheet}=await import('../scripts/sheets/monster.mjs');
+  const sheet=new MonsterSheet();sheet.actor={isOwner:true,system:{showdownSetup:{legend:{color1:'Start'}}}};sheet.isEditable=true;sheet.tabGroups.primary='setup';
+  let label;const target={dataset:{cellIndex:'3',state:'0'},style:{},setAttribute:(key,value)=>label=value};
+  MonsterSheet.setupCell.call(sheet,null,target);
+  assert.equal(target.dataset.state,'1');assert.equal(sheet._cellEdits.get(3),1);assert.match(label,/Start/);
+  sheet.isEditable=false;MonsterSheet.setupCell.call(sheet,null,target);assert.equal(sheet._cellEdits.get(3),1);
+  sheet._draft.set('system.aftermath.victory','reward');sheet.failSave=true;
+  await assert.rejects(sheet._processSubmitData(null,null,{system:{}},{}));
+  assert.equal(sheet._draft.get('system.aftermath.victory'),'reward');assert.equal(sheet._cellEdits.get(3),1);assert.equal(sheet.tabGroups.primary,'setup');
+});
+test('Monster saves only dirty fields and fresh merged cells, with signed values kept numeric',async()=>{
+  const {MonsterSheet}=await import('../scripts/sheets/monster.mjs');
+  foundry.utils={flattenObject:object=>{
+    const result={};const visit=(data,prefix='')=>{for(const [key,value] of Object.entries(data)){const path=prefix?prefix+'.'+key:key;if(value && typeof value==='object' && !Array.isArray(value))visit(value,path);else result[path]=value;}};
+    visit(object);return result;
+  },expandObject:object=>{
+    const result={};for(const [path,value] of Object.entries(object)){const keys=path.split('.');let cursor=result;for(const key of keys.slice(0,-1))cursor=cursor[key]??={};cursor[keys.at(-1)]=value;}return result;
+  }};
+  const sheet=new MonsterSheet();const cells=Array(352).fill(0);cells[5]=4;
+  sheet.actor={system:{showdownSetup:{cells}}};sheet._cellEdits.set(7,2);sheet._draft.set('system.speed','2');
+  const data=sheet._processFormData(null,null,{object:{name:'stale',system:{speed:2,notes:'stale'}}});
+  assert.equal(data.name,undefined);assert.equal(data.system.notes,undefined);assert.equal(data.system.speed,2);
+  assert.equal(data.system.showdownSetup.cells[5],4);assert.equal(data.system.showdownSetup.cells[7],2);
+  sheet._cellEdits.clear();assert.equal(sheet._processFormData(null,null,{object:{system:{speed:-3}}}).system.showdownSetup,undefined);
+  let positive;sheet.element={querySelectorAll:()=>[{value:'2',closest:()=>({classList:{toggle:(key,value)=>positive=value}})}]};
+  sheet.updateSigns();assert.equal(positive,true);
+});
