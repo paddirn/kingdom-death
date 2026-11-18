@@ -6,7 +6,7 @@ import { dropTarget, acceptsItem, oncePerDrop, installDropFeedback } from "../ui
 import { familyContext } from "../family/context.mjs";
 import { updateFamily } from "../family/relationships.mjs";
 import { resolveProficiency } from "../rules/proficiency.mjs";
-import { pickImage } from "../ui/images.mjs";
+import { pickImage, previewImage } from "../ui/images.mjs";
 import { KDMActorSheet } from "./actor-base.mjs";
 import { ATTRIBUTES, LOCATIONS } from "../rules/constants.mjs";
 import { gridCells, validateGrid } from "../rules/gear-grid.mjs";
@@ -27,7 +27,7 @@ export class SurvivorSheet extends KDMActorSheet {
   tabGroups = {primary: "attributes"};
   _draft = new Map();
   static DEFAULT_OPTIONS = {classes: ["kdm-survivor"], position: {width: 900, height: 850},
-    actions: {unlinkProficiency: this.unlinkProficiency, progress: this.progress, clearGear: this.clearGear, deleteItem: this.deleteItem,
+    actions: {portraitPreview: function() { previewImage(this.actor); }, unlinkProficiency: this.unlinkProficiency, progress: this.progress, clearGear: this.clearGear, deleteItem: this.deleteItem,
       familyApply: this.familyApply, familyClear: this.familyClear,
       openFamily: this.openFamily, actorImage: function(event,target) { if(this.isEditable) pickImage(this.actor,target.dataset.imagePath); }}};
   static progress(event, target) {
@@ -82,7 +82,7 @@ export class SurvivorSheet extends KDMActorSheet {
     let proficiency=null;
     const proficiencyUuid=this._draft.get("system.proficiencyUuid") ?? this.actor.system.proficiencyUuid;
     if (proficiencyUuid) { try { proficiency=await resolveProficiency(proficiencyUuid); } catch { /* Show clearable missing reference. */ } }
-    const gear = this.actor.items.filter(i => i.type === "gear");
+    const gear = this.actor.items.filter(i => ["gear","armor"].includes(i.type));
     const track = (path, value, length, milestones) => ({path, value,
       boxes: Array.from({length}, (_, i) => ({value: i + 1, checked: i < value, milestone: milestones.includes(i + 1)}))});
     const owned = type => this.actor.items.contents.filter(i => i.type === type).toSorted((a,b) => a.sort - b.sort).map(i => ({id:i.id,name:i.name}));
@@ -91,7 +91,7 @@ export class SurvivorSheet extends KDMActorSheet {
       try {const item=await resolveProficiency(uuid);return {uuid,name:item.name,available:true};}
       catch {return {uuid,name:'Missing or inaccessible Proficiency',available:false};}
     }));
-    return {...context, inventory: context.inventory.filter(item=>['gear','resource'].includes(item.itemType)),
+    return {...context, inventory: context.inventory.filter(item=>['gear','armor','resource'].includes(item.itemType)),
       impairments: Object.entries(impairments).map(([key,label])=>({key,parts:labelParts(label),checked:this.actor.system.impairmentFlags?.[key]})),
       additionalProficiencies, specials:[...owned('fightingArt').map(i=>({...i,label:'fighting art'})),...owned('ability').map(i=>({...i,label:'ability'}))], family:familyContext(this.actor,game.actors.contents),
       customTokens:Object.entries(this.actor.system.customTokens ?? {}).map(([key,token])=>({key,...token})),
@@ -139,6 +139,7 @@ export class SurvivorSheet extends KDMActorSheet {
           return this.render({force:false});
         }
         if(target.dataset.kdmDrop === "proficiency") return await this.linkProficiency(item.uuid);
+        await this.flushArmorDraft();
         return await receiveItem(this.actor,item,target.dataset.kdmDrop === "gear" ? target.dataset.slot : null);
       } catch(error) {ui.notifications.warn(error.message);}
     });
@@ -173,14 +174,14 @@ export class SurvivorSheet extends KDMActorSheet {
   }
   static async clearGear(event,target) {
     if(!this.isEditable) return;
-    try { await clearGear(this.actor,target.dataset.slot); }
+    try { await this.flushArmorDraft(); await clearGear(this.actor,target.dataset.slot); }
     catch(error) {ui.notifications.warn(error.message);}
   }
   static async deleteItem(event,target) {
     if(!this.isEditable) return;
     const item=this.actor.items.get(target.dataset.itemId);if(!item) return;
     const yes=await foundry.applications.api.DialogV2.confirm({window:{title:"Remove item"},content:"<p>Delete this embedded item permanently? A world-directory source item, if any, is unaffected.</p>"});
-    if(yes) try {await deleteInventoryItem(this.actor,item.id);} catch(error) {ui.notifications.warn(error.message);}
+    if(yes) try {await this.flushArmorDraft(); await deleteInventoryItem(this.actor,item.id);} catch(error) {ui.notifications.warn(error.message);}
   }
   async _onClose(options) {
     this._dropFeedback?.abort();
@@ -209,6 +210,13 @@ export class SurvivorSheet extends KDMActorSheet {
     const actor=game.actors.get(target.dataset.actorId);
     if(actor?.testUserPermission(game.user,"OBSERVER")) actor.sheet.render({force:true});
   }
+  async flushArmorDraft() {
+    const entries=[...this._draft].filter(([key])=>/^system\.locations\.[^.]+\.armor$/.test(key));
+    if(!entries.length) return;
+    await this.actor.update(Object.fromEntries(entries));
+    for(const [key,value] of entries) if(Number(this.actor.system.locations[key.split(".")[2]].armor)!==Number(value)) throw new Error("Armor save was cancelled; equipment was not changed.");
+    for(const [key,value] of entries) if(this._draft.get(key)===value) this._draft.delete(key);
+  }
   _processFormData(event, form, formData) {
     const data = super._processFormData(event, form, formData);
     // Form expansion may represent indexed checkbox paths as an object. Save dense Boolean arrays.
@@ -231,6 +239,8 @@ export class SurvivorSheet extends KDMActorSheet {
         ui.notifications.info(`Survival corrected to ${data.system.survival.value}; limit ${data.system.survival.limit}.`);
       }
     }
+    // An untouched armor input must not overwrite protection changed by an immediate equipment update.
+    for(const key of Object.keys(LOCATIONS)) if(data.system.locations?.[key] && !this._draft.has(`system.locations.${key}.armor`)) delete data.system.locations[key].armor;
     return data;
   }
 }
