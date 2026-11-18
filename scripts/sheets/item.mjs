@@ -45,8 +45,9 @@ export class KDMItemSheet extends api.HandlebarsApplicationMixin(sheets.ItemShee
       tags: this._tags ?? this.item.system.keywords,
       isProficiency: this.item.type === "proficiency",
       ranks: ["none","specialist","master"].map(value=>({value,label:value[0].toUpperCase()+value.slice(1),selected:this.item.system.rank === value})),
-      isGear: this.item.type === "gear", isResource: this.item.type === "resource",
-      sides: this.item.type === "gear" ? Object.entries(this.item.system.affinities).map(([side,color]) => ({side,
+      isGear: this.item.type === "gear", isEquipment: ["gear","armor"].includes(this.item.type), isArmor: this.item.type === "armor",
+      armorLocations: Object.entries(this.item.system.armor ?? {}).map(([key,value])=>({key,value,label:key[0].toUpperCase()+key.slice(1)})), isResource: this.item.type === "resource",
+      sides: ["gear","armor"].includes(this.item.type) ? Object.entries(this.item.system.affinities).map(([side,color]) => ({side,
         colors: ["none","red","green","blue"].map(value => ({value, selected: value === color}))})) : []};
   }
   static addKeyword() {
