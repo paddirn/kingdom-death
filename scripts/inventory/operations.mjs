@@ -25,14 +25,14 @@ async function ownedCopy(actor, item) {
 }
 export function receiveItem(actor,item,slot=null) {
   return inventoryTask(actor,async()=>{
-    if (slot !== null && item.type!=="gear") throw new Error("Only Gear belongs in the equipment grid.");
+    if (slot !== null && !["gear","armor"].includes(item.type)) throw new Error("Only Gear belongs in the equipment grid.");
     if (slot !== null && !SLOTS.includes(slot)) throw new Error("Unknown gear slot.");
     const owned=await ownedCopy(actor,item);
     if (slot !== null) {
       // A failed assignment deliberately leaves the created Item in inventory, never destroys user data.
       try {
         const next=assignGear(actor.system.gearGrid,slot,owned.id,actor.items.contents);
-        await actor.update({"system.gearGrid":next});
+        await actor.update(Object.fromEntries(SLOTS.filter(key=>next[key]!==actor.system.gearGrid[key]).map(key=>[`system.gearGrid.${key}`,next[key]])));
         if(actor.system.gearGrid[slot]!==owned.id) throw new Error("Gear assignment was cancelled.");
       } catch(error) { throw new Error(`${error.message} The Item remains in Inventory; drag that owned copy to retry.`); }
     }
@@ -49,21 +49,11 @@ export function clearGear(actor,slot) {
 export function deleteInventoryItem(actor,id) {
   return inventoryTask(actor,async()=>{
     const item=actor.items.get(id); if(!item) return;
-    const previous={...actor.system.gearGrid};
-    const changes=Object.fromEntries(SLOTS.filter(key=>previous[key]===id).map(key=>[`system.gearGrid.${key}`,""]));
-    if(Object.keys(changes).length) {
-      await actor.update(changes);
-      if(SLOTS.some(key=>actor.system.gearGrid[key]===id)) throw new Error("Gear cleanup was cancelled; Item was not deleted.");
-    }
-    try {
-      await item.delete();
-      if(actor.items.get(id)) throw new Error("Item deletion was cancelled.");
-    } catch(error) {
-      // Restore only affected slots while this client's inventory queue is held.
-      const restore=Object.fromEntries(SLOTS.filter(key=>previous[key]===id && !actor.system.gearGrid[key]).map(key=>[`system.gearGrid.${key}`,id]));
-      if(actor.items.get(id) && Object.keys(restore).length) await actor.update(restore);
-      throw error;
-    }
+    await item.delete();
+    if(actor.items.get(id)) throw new Error("Item deletion was cancelled.");
+    const changes=Object.fromEntries(SLOTS.filter(key=>actor.system.gearGrid?.[key]===id).map(key=>[`system.gearGrid.${key}`,""]));
+    if(Object.keys(changes).length) await actor.update(changes);
+    if(SLOTS.some(key=>actor.system.gearGrid?.[key]===id)) throw new Error("Item deleted but gear cleanup was cancelled; clear the missing slot to reconcile protection.");
   });
 }
 /** Cleanup for native/macro Item deletions outside this sheet; only the initiating owner writes. */

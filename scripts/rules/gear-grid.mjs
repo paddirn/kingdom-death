@@ -1,13 +1,13 @@
 import { SLOTS } from "./constants.mjs";
 /** Coordinates are fixed; gear rotation is deliberately not supported. */
 export function gridCells(assignments, items) {
-  const gear = new Map(items.filter(i => i.type === "gear").map(i => [i.id, i]));
+  const gear = new Map(items.filter(i => ["gear","armor"].includes(i.type)).map(i => [i.id, i]));
   return SLOTS.map((key, index) => ({key, index, row: Math.floor(index / 3), column: index % 3,
     itemId: assignments[key] || "", item: gear.get(assignments[key]) ?? null,
     missing: Boolean(assignments[key] && !gear.has(assignments[key]))}));
 }
 export function validateGrid(assignments, items) {
-  const ids = new Set(items.filter(i => i.type === "gear").map(i => i.id));
+  const ids = new Set(items.filter(i => ["gear","armor"].includes(i.type)).map(i => i.id));
   const used = new Set();
   for (const key of SLOTS) {
     const id = assignments[key];
