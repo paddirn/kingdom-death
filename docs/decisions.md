@@ -50,3 +50,12 @@ Use native Journal/JournalEntryPage documents for glossary data, with source nam
 ## Keyword and proficiency compatibility
 
 Preserve each nonempty legacy keyword string as one tag because no delimiter contract existed. Use inherited TypeDataModel migration for world/embedded Items; persist canonical values through normal saves without destructive startup rewriting. Rename legacy ranks through model migration while deriving display names on save. Retain hidden Survivor specialist/master Boolean values and keep primary/additional UUID references independent. Unlinking is a deferred form edit, never a source Item deletion.
+
+## Armor accounting and Settlement tabs
+
+- Armor is a distinct equipment Item with shared affinity schema, no attack profile, and permanent protection. Gear attack fields and keyword behavior are unchanged.
+- Actor current armor remains authoritative and damageable. The ledger tracks independent armor plus each embedded Armor Item's granted, remaining and damage values. Manual damage consumes contributors by stable Item ID before independent armor; manual increases add independent armor. Capacity edits retain damage debt. These are explicit bookkeeping conventions, not new attack rules.
+- Use native Actor pre-update processing for atomic Actor totals/ledger updates; Item create/update/delete hooks reconcile only committed changes. Canceled deletion never unequips first. Native cross-document writes are not transactions. See recovery/concurrency limits in armor-settlement.md.
+- Settlement keeps campaign fields in its schema but removes phase/party/quarry form controls. Population lists accessible World Survivors without inferring membership. Locations preserve Item sort order; drag reordering is deferred.
+- Survivor header previews actor.img and uses the existing ownership-checked native picker. Prototype token art remains independent.
+- Consulted official V14 Actor and Item document API pages on November 18, 2026: https://foundryvtt.com/api/v14/classes/foundry.documents.Actor.html and https://foundryvtt.com/api/v14/classes/foundry.documents.Item.html . This is not build-365 runtime verification.
