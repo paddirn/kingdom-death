@@ -40,10 +40,10 @@ test('deleting inventory gear clears its slot; cancelled deletion restores assig
   actor.cancelDelete=true;await assert.rejects(deleteInventoryItem(actor,item.id),/cancelled/);assert.equal(actor.system.gearGrid.slot8,item.id);
   actor.cancelDelete=false;await deleteInventoryItem(actor,item.id);assert.equal(actor.system.gearGrid.slot8,'');assert.equal(actor.items.get(item.id),undefined);
 });
-test('cleanup cancellation prevents deletion, failed assignment retains a recoverable inventory copy',async()=>{
+test('post-delete cleanup cancellation is reported; failed assignment retains its inventory copy',async()=>{
   const {actor,source}=fixture();const item=await receiveItem(actor,source(),'slot0');actor.cancelUpdate=true;
-  await assert.rejects(deleteInventoryItem(actor,item.id),/cleanup was cancelled/);assert.ok(actor.items.get(item.id));
-  actor.cancelUpdate=false;actor.failUpdate=true;await assert.rejects(receiveItem(actor,source(),'slot1'),/update failed/);assert.equal(actor.items.contents.length,2);assert.equal(actor.system.gearGrid.slot1,'');
+  await assert.rejects(deleteInventoryItem(actor,item.id),/cleanup was cancelled/);assert.equal(actor.items.get(item.id),undefined);
+  actor.cancelUpdate=false;await clearGear(actor,'slot0');actor.failUpdate=true;await assert.rejects(receiveItem(actor,source(),'slot1'),/update failed/);assert.equal(actor.items.contents.length,1);assert.equal(actor.system.gearGrid.slot1,'');
 });
 test('missing legacy slots can be cleared individually and external deletions cleaned',async()=>{
   const {actor}=fixture();actor.system.gearGrid.slot0='gone';actor.system.gearGrid.slot1='also-gone';
@@ -99,4 +99,15 @@ test('unobserved external dragstart does not veto a drop or claim a valid target
   let highlighted=false;const target={dataset:{kdmDrop:'gear'},classList:{add:()=>highlighted=true,remove(){}}};
   const event={target:{closest:()=>target},preventDefault(){},dataTransfer:{dropEffect:'none'}};
   listeners.dragover(event);assert.equal(event.dataTransfer.dropEffect,'copy');assert.equal(highlighted,false);
+});
+test('Armor imports, repeated owned drops, concurrent moves, canceled deletion and target restrictions',async()=>{
+  const {actor,source,created}=fixture();const armor=await receiveItem(actor,source('armor'),'slot0');
+  await Promise.all([receiveItem(actor,armor,'slot2'),receiveItem(actor,armor,'slot7')]);assert.equal(created(),1);assert.equal(actor.system.gearGrid.slot7,armor.id);assert.equal(actor.system.gearGrid.slot2,'');
+  const target=type=>({dataset:{kdmDrop:type}});
+  for(const type of ['armor','gear','resource']) assert.equal(acceptsItem(target('storage'),{documentName:'Item',type},true),true);
+  for(const type of ['innovation','settlementLocation','ability']) assert.equal(acceptsItem(target('storage'),{documentName:'Item',type},true),false);
+  for(const type of ['innovation','settlementLocation']) {
+    const owned=await receiveItem(actor,source(type));await receiveItem(actor,owned);assert.equal(actor.items.contents.filter(i=>i.type===type).length,1);
+    assert.equal(acceptsItem(target(type),armor,true),false);assert.equal(acceptsItem(target(type),owned,false),false);
+  }
 });

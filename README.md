@@ -7,7 +7,7 @@ Unofficial, content-free foundation for a board-game-oriented system. System ID:
 ## Included in milestone 1
 
 - Survivor, Monster, Settlement typed Actor models and ApplicationV2 sheets.
-- Seven Item types: Gear, Resource, Fighting Art, Disorder, Ability, Innovation, Settlement Location. Gear and Resource have structured fields; the other five provide basic notes, source, and keywords.
+- Nine Item types: Gear, Armor, Resource, Fighting Art, Disorder, Ability, Innovation, Settlement Location and Proficiency. All use keyword tags. Gear retains attack profiles; Armor has permanent per-location protection.
 - Survivor attributes, survival/limit, insanity/brain injury, armor/injury boxes, bleeding, basic progression counters, statuses, and a 3×3 gear grid.
 - Embedded inventory; editable resource quantities; stored gear affinities and attack profile.
 - Settlement campaign controller: lantern year, population, endeavors, departing party, quarry, active phase, placeholder hunt coordinates and Scene reference.
@@ -41,7 +41,7 @@ Forge's documented [custom package import workflow](https://forums.forge-vtt.com
 2. Edit a survivor's name, movement, survival, armor, injury boxes, and notes. Click **Save changes**. Close/reopen, then reload the browser; values must remain.
 3. On the survivor, **Add gear**, name it `Test gear A`, set an affinity and save its Item sheet. Repeat for `Test gear B`. Drag the owned Items from Inventory into two cells. Move one to another cell; its original cell must clear without creating another Item. Assignments save immediately and must survive reload.
 4. Clear a cell with ×; its Item must remain in Inventory. Delete an assigned Item through Inventory's confirmed ×; the Item and its grid reference must disappear. Drop a world or compendium Gear Item directly into a cell and verify one independent owned copy. World source edits must not change that copy.
-5. On the settlement, add a Resource, set quantity to 7 on its Item sheet, and save. Set population, lantern year, party, and quarry; save. Duplicate party assignments must be rejected. Change phase to hunt, set coordinates, save; then change to showdown and save. No automated gameplay should occur.
+5. On the settlement, add a Resource, set quantity to 7 on its Item sheet, and save. Set population and lantern year; save. Open Campaign Settings, edit hunt coordinates and the Showdown Scene reference, and save. Existing phase, party and quarry assignments remain stored but are not edited by this sheet.
 6. In **Configure Settings → Kingdom Death: Monster → Campaign Dashboard**, select the Settlement and open it. A script Macro containing `game.kingdomDeath.campaign.open();` is an optional one-click shortcut; the settings menu remains the no-code entry point.
 7. Give a second user **Observer** access to Settlement and **Owner** access to one Survivor through native ownership configuration. In another browser session, verify read-only settlement, editable owned survivor, no editing of others' actors, and persisted updates after both clients reload. Grant Settlement Owner only to players intended to manage campaign state. Active settlement selection remains GM-only.
 8. Update a saved record in one client while its sheet is open in the other; the second must refresh. Coordinate editing: simultaneous saves of the same field use Foundry's last-write behavior; no transaction/locking protocol is claimed. Save before inventory actions; an external update may refresh a form with unsaved edits.
@@ -74,3 +74,5 @@ See [Survivor UI and drop-target checklist](docs/survivor-drag-drop.md) for comp
 The Survivor header now keeps Save Changes beside Sex; Hunt XP uses a 10+6 track, and Survival is bounded by its entered limit. See the [14.365 Forge runtime checklist](docs/survivor-drag-drop.md) before relying on the native drag/drop repair in play.
 
 GMs can open **Configure Settings → Kingdom Death: Monster → Open Living Glossary Manager** to import authorized JSON into native Journal pages. See [source-access findings, JSON format and Forge instructions](docs/living-glossary.md). Website scraping is not enabled; only an original demonstration dataset is included.
+
+See [Armor and Settlement update](docs/armor-settlement.md) for contribution accounting, Settlement tabs, portrait controls and the Forge manual test checklist.

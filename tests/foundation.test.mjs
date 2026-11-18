@@ -89,11 +89,6 @@ test("survivor submission calls duplicate-grid validation", () => {
   sheet.actor = {items: {contents:[{id:"x",type:"gear"}]}};
   assert.throws(() => sheet._processFormData(null,null,{object:{system:{gearGrid:{slot0:"x",slot1:"x"}}}}), /two slots/);
 });
-test("settlement submission calls party validation", () => {
-  game.actors.contents = [{id:"s",type:"survivor"}];
-  const sheet = new SettlementSheet();
-  assert.throws(() => sheet._processFormData(null,null,{object:{system:{campaign:{phase:"hunt",party:{slot0:"s",slot1:"s"}}}}}), /only once/);
-});
 Handlebars.registerHelper("checked", value => value ? "checked" : "");
 Handlebars.registerHelper("eq", (a,b) => a === b);
 function render(file, context) { return Handlebars.compile(fs.readFileSync(new URL(`../templates/${file}.hbs`,import.meta.url),"utf8"))(context); }
@@ -104,7 +99,7 @@ test("all templates render representative records and escape private text", () =
     survivor:{...common,system:defaults(SurvivorData.defineSchema()),cells:Array.from({length:9},(_,index)=>({key:`slot${index}`,index,row:Math.floor(index/3),column:index%3,choices:[]}))},
     monster:{...common,system:defaults(MonsterData.defineSchema())},
     settlement:{...common,system:defaults(SettlementData.defineSchema())},
-    item:{...common,system:defaults(itemModels.gear.defineSchema()),isGear:true},
+    item:{...common,system:defaults(itemModels.gear.defineSchema()),isGear:true,isEquipment:true},
     'campaign-picker':{isGM:true,settlements:[{id:"s",name}]}
   };
   for (const [file, context] of Object.entries(fixtures)) {
@@ -463,7 +458,7 @@ test('inventory view excludes non-inventory Items and icons can be overridden in
   } finally {game.settings.get=previous;}
 });
 test('Item preview and revised editable fields have distinct markup and safe data paths',()=>{
-  const gear=render('item',{isGear:true,item:{},system:{attack:{accuracy:4}},sides:[{side:'left',colors:[{value:'red',selected:true}]}]});
+  const gear=render('item',{isGear:true,isEquipment:true,item:{},system:{attack:{accuracy:4}},sides:[{side:'left',colors:[{value:'red',selected:true}]}]});
   assert.match(gear,/<button type="button"[^>]*data-action="previewImage"/);assert.ok(!gear.includes('Kingdom Death: Monster · Item'));
   assert.match(gear,/name="system.attack.accuracy" value="4"/);assert.match(gear,/aria-hidden="true" class="kdm-plus">\+/);
   assert.match(gear,/class="edge-left"/);assert.match(gear,/value="red" selected/);
@@ -528,4 +523,49 @@ test('Monster saves only dirty fields and fresh merged cells, with signed values
   sheet._cellEdits.clear();assert.equal(sheet._processFormData(null,null,{object:{system:{speed:-3}}}).system.showdownSetup,undefined);
   let positive;sheet.element={querySelectorAll:()=>[{value:'2',closest:()=>({classList:{toggle:(key,value)=>positive=value}})}]};
   sheet.updateSigns();assert.equal(positive,true);
+});
+
+test('Armor defaults validate and reuse equipment affinities without weapon profiles',async()=>{
+  const {KDMItemSheet}=await import('../scripts/sheets/item.mjs');
+  const armor=new itemModels.armor();assert.equal(armor.validate(),true);
+  assert.deepEqual(armor.armor,{head:0,arms:0,body:0,waist:0,legs:0});assert.equal(armor.attack,undefined);
+  assert.deepEqual(armor.affinities,new itemModels.gear().affinities);
+  const sheet=new KDMItemSheet();sheet.item={type:'armor',name:'Test',img:'armor.png',system:armor};sheet.isEditable=true;
+  const context=await sheet._prepareContext({}),html=render('item',context);
+  assert.match(html,/>Armor<\/h2>/);assert.doesNotMatch(html,/Attack Profile/);assert.match(html,/edge-left/);
+  for(const key of ['head','arms','body','waist','legs']) assert.match(html,new RegExp(`system.armor.${key}`));
+  assert.match(html,/system.source/);assert.match(html,/data-keyword-entry/);
+  const survivor=new SurvivorData();assert.equal(survivor.validate(),true);assert.equal(survivor.armorLedger.initialized,false);assert.deepEqual(survivor.armorLedger.entries,[]);
+});
+
+test('Settlement sections use actual embedded Items and population names refresh dynamically with permissions',async()=>{
+  game.i18n={localize:key=>key};
+  const survivors=[{id:'s',name:'Erza',type:'survivor',system:{sex:'F'},testUserPermission:()=>true},{id:'hidden',name:'Hidden',type:'survivor',system:{sex:'M'},testUserPermission:()=>false}];
+  game.actors.contents=survivors;
+  const contents=['gear','armor','resource','innovation','settlementLocation','ability'].map((type,i)=>({id:type,name:type,type,sort:i,img:'card.png',system:{quantity:0}}));
+  const sheet=new SettlementSheet();sheet.actor={name:'Home',system:new SettlementData(),items:{contents}};sheet.isEditable=true;
+  let c=await sheet._prepareContext({});assert.deepEqual(c.inventory.map(i=>i.id),['gear','armor','resource']);assert.deepEqual(c.innovations.map(i=>i.id),['innovation']);assert.deepEqual(c.locations.map(i=>i.id),['settlementLocation']);assert.deepEqual(c.population,[{id:'s',name:'Erza (F)'}]);
+  survivors[0].name='Zachary';survivors[0].system.sex='M';c=await sheet._prepareContext({});assert.equal(c.population[0].name,'Zachary (M)');
+  survivors[0].system.sex='';assert.equal((await sheet._prepareContext({})).population[0].name,'Zachary');game.actors.contents=[];assert.deepEqual((await sheet._prepareContext({})).population,[]);
+  sheet.tabGroups.primary='locations';c=await sheet._prepareContext({});assert.equal(c.active.locations,true);
+  const html=render('settlement',c);assert.match(html,/fas fa-cog/);assert.match(html,/kdm-location-cards/);assert.equal((html.match(/name="system.(lanternYear|population|endeavors|survivalLimit)"/g)||[]).length,4);
+  assert.doesNotMatch(html,/name="system.campaign.(phase|party|quarryId)/);assert.doesNotMatch(html,/Inventory &amp; records|manual total/);
+  assert.ok(html.indexOf('<h2>Innovations')<html.indexOf('<h2>Settlement Storage'));
+  c.editable=false;const readonly=render('settlement',c);assert.doesNotMatch(readonly,/data-action="(addItem|deleteItem)"/);assert.match(readonly,/data-action="editItem"/);
+});
+
+test('Settlement dirty-only saving preserves hidden campaign assignments and drafts on failure',async()=>{
+  // Utility doubles are installed by the Monster dirty-field test above.
+  const sheet=new SettlementSheet();sheet._draft.set('system.population','7');
+  const data=sheet._processFormData(null,null,{object:{system:{population:7,campaign:{phase:'hunt',party:{slot0:'missing'},quarryId:'missing'}}}});
+  assert.deepEqual(data,{system:{population:7}});
+  sheet.failSave=true;await assert.rejects(sheet._processSubmitData(null,null,data,{}));assert.equal(sheet._draft.get('system.population'),'7');
+  sheet.failSave=false;await sheet._processSubmitData(null,null,data,{});assert.equal(sheet._draft.size,0);
+});
+
+test('Survivor portrait reuses Actor image, native preview, ownership-gated picker and persistent header',()=>{
+  const c={actor:{name:'Erza',img:'portrait.webp'},system:defaults(SurvivorData.defineSchema()),editable:true};
+  const html=render('survivor',c);assert.ok(html.indexOf('class="kdm-avatar"')<html.indexOf('Survivor name'));assert.match(html,/src="portrait.webp"/);assert.match(html,/data-action="portraitPreview"/);assert.match(html,/data-image-path="img"/);
+  const readonly=render('survivor',{...c,editable:false});const header=readonly.slice(0,readonly.indexOf('<nav'));assert.match(header,/portraitPreview/);assert.doesNotMatch(header,/data-action="actorImage"/);
+  const css=fs.readFileSync(new URL('../styles/kingdom-death.css',import.meta.url),'utf8');assert.match(css,/kdm-avatar img[^}]+object-fit:contain/);assert.match(css,/kdm-location-cards img[^}]+aspect-ratio:1 \/ 2/);
 });

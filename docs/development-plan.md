@@ -2,7 +2,7 @@
 
 ## Milestone 1 — System foundation (implemented candidate, runtime acceptance pending)
 
-Acceptance: install ZIP on Forge 14.365; launch without errors; create every Actor and Item type; save/reload fields; assign nine distinct gear copies and reject duplicate assignment; persist resource quantity; share campaign across clients under native ownership; select phase/party/quarry; clear deleted references. Offline syntax, template, manifest and logic checks must pass. Follow runtime-checklist.md before marking complete.
+Acceptance: install ZIP on Forge 14.365; launch without errors; create every Actor and Item type; save/reload fields; assign nine distinct gear copies and reject duplicate assignment; persist resource quantity; share campaign across clients under native ownership; preserve stored phase/party/quarry while editing campaign settings; clear deleted references. Offline syntax, template, manifest and logic checks must pass. Follow runtime-checklist.md before marking complete.
 
 ## Milestone 2 — Assisted White Lion showdown
 

@@ -29,7 +29,7 @@ Monster stores editable level, movement, toughness, wounds (manual tally), accur
 
 Settlement stores lanternYear, population, endeavors, survivalLimit, and campaign `{phase, party, quarryId, hunt, showdownSceneId}`. Party is four keyed world Actor IDs. Hunt positions are nonnegative manual coordinates without a defined track length. Population is independent of created survivor records. Scene ID is only a reference and is not activated automatically.
 
-Inventory uses native embedded Items. Gear adds attack profile and affinities; Resource adds nonnegative integer quantity. Proficiency Items add Type/Rank, generated names, structured keyword tags and description; other Item types retain source, free-text keywords and notes. Core keeps no hardcoded content lists. Individual survival limits remain manual and are not forced to the settlement limit.
+Inventory uses native embedded Items. Gear adds attack profile and affinities; Resource adds nonnegative integer quantity. Proficiency Items add Type/Rank, generated names, structured keyword tags and description; all Item types retain source, structured keyword tags and notes. Core keeps no hardcoded content lists. Individual survival limits remain manual and are not forced to the settlement limit.
 
 ## Permissions and concurrency
 
@@ -70,3 +70,7 @@ The exact 14.365 macro/update lifecycle still needs the runtime checks in `docs/
 ## Shared Item tags and additional proficiency links
 
 See [Proficiency and keyword migration](proficiency-keywords.md). BasicItemData migrates legacy keyword strings before ArrayField validation, and ProficiencyData maps old rank values. Survivor additional links use a separate UUID array with form drafts; combined Specials are a display projection of existing embedded Item types.
+
+## Armor and Settlement organization
+
+`EquipmentData` shares affinities between Gear and Armor without giving Armor a weapon profile. `KDMActor._preUpdate` performs pure contribution accounting from `rules/armor.mjs` and writes the ledger and current armor in the same Actor update. Settlement sections filter actual embedded Items; its Population tab resolves accessible World Actors live. See [accounting and verification](armor-settlement.md).

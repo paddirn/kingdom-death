@@ -17,6 +17,7 @@ export class SurvivorData extends foundry.abstract.TypeDataModel {
   }
   static defineSchema() {
     return {...common(),
+      armorLedger: schema({initialized: bool(), independent: schema(Object.fromEntries(Object.keys(LOCATIONS).map(k=>[k,count()]))), entries: new fields.ArrayField(schema({itemId:text({blank:false}), ...Object.fromEntries(["granted","remaining","damage"].map(name=>[name,schema(Object.fromEntries(Object.keys(LOCATIONS).map(k=>[k,count()])))]))}), {initial:[]})}),
       cannotUseAbilities: bool(),
       impairmentFlags: schema(Object.fromEntries(Object.keys(impairments).map(key => [key,bool()]))),
       severeInjuries: schema(Object.fromEntries(Object.entries(severeInjuries).map(([location, records]) => [

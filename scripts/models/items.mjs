@@ -11,12 +11,18 @@ export class BasicItemData extends foundry.abstract.TypeDataModel {
 export class ResourceData extends BasicItemData {
   static defineSchema() { return {...super.defineSchema(), quantity: count(1)}; }
 }
-export class GearData extends BasicItemData {
+export class EquipmentData extends BasicItemData {
   static defineSchema() {
-    return {...super.defineSchema(), attack: schema({speed: count(), accuracy: count(), strength: number()}),
+    return {...super.defineSchema(),
       affinities: schema(Object.fromEntries(["top", "right", "bottom", "left"].map(side => [side,
         new fields.StringField({required: true, initial: "none", choices: ["none", "red", "green", "blue"]})])))};
   }
+}
+export class GearData extends EquipmentData {
+  static defineSchema() { return {...super.defineSchema(), attack: schema({speed: count(), accuracy: count(), strength: number()})}; }
+}
+export class ArmorData extends EquipmentData {
+  static defineSchema() { return {...super.defineSchema(), armor: schema(Object.fromEntries(["head","arms","body","waist","legs"].map(key=>[key,count()])))}; }
 }
 export class ProficiencyData extends BasicItemData {
   static migrateData(source) {
@@ -30,5 +36,5 @@ export class ProficiencyData extends BasicItemData {
       keywords: new fields.ArrayField(text({blank:false}), {initial:[]}), description: text({blank:true})};
   }
 }
-export const itemModels = {proficiency: ProficiencyData, gear: GearData, resource: ResourceData, fightingArt: BasicItemData,
+export const itemModels = {proficiency: ProficiencyData, gear: GearData, armor: ArmorData, resource: ResourceData, fightingArt: BasicItemData,
   disorder: BasicItemData, ability: BasicItemData, innovation: BasicItemData, settlementLocation: BasicItemData};

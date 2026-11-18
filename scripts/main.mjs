@@ -1,3 +1,5 @@
+import { reconcileArmor } from "./rules/armor.mjs";
+import { KDMActor } from "./documents/actor.mjs";
 import { LivingGlossaryManager } from "./glossary/manager.mjs";
 import { LivingGlossaryApplication } from "./glossary/application.mjs";
 import { cleanupDeletedGear } from "./inventory/operations.mjs";
@@ -14,6 +16,7 @@ import { KDMItemSheet } from "./sheets/item.mjs";
 import { CampaignController } from "./campaign/controller.mjs";
 import { CampaignDashboard } from "./campaign/dashboard.mjs";
 Hooks.once("init", () => {
+  CONFIG.Actor.documentClass = KDMActor;
   CONFIG.Item.documentClass = KDMItem;
   Object.assign(CONFIG.Actor.dataModels, {survivor: SurvivorData, monster: MonsterData, settlement: SettlementData});
   Object.assign(CONFIG.Item.dataModels, itemModels);
@@ -62,6 +65,14 @@ for (const event of ["updateItem", "deleteItem"]) Hooks.on(event, item => {
 
 Hooks.on("deleteItem", (item, options, userId) => {
   const actor=item.parent;
-  if(userId!==game.user.id || actor?.type!=="survivor" || item.type!=="gear" || !actor.isOwner) return;
+  if(userId!==game.user.id || actor?.type!=="survivor" || !["gear","armor"].includes(item.type) || !actor.isOwner) return;
   cleanupDeletedGear(actor,item.id).catch(error=>ui.notifications.warn(`Gear cleanup failed: ${error.message}. Clear the missing cell manually.`));
+});
+
+// Reconcile only after a committed embedded Armor change; no recursive Item writes.
+for (const event of ["createItem","updateItem"]) Hooks.on(event,(item,options,userId)=>{
+  if(item.type!=="armor" || item.parent?.type!=="survivor" || userId!==game.user.id || !item.parent.isOwner) return;
+  const actor=item.parent;
+  const {ledger}=reconcileArmor(actor.system,actor.system.gearGrid,actor.items.contents);
+  actor.update({"system.armorLedger":ledger}).catch(error=>ui.notifications.error(`Armor accounting failed: ${error.message}. Save the Survivor to retry.`));
 });
