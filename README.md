@@ -76,3 +76,5 @@ The Survivor header now keeps Save Changes beside Sex; Hunt XP uses a 10+6 track
 GMs can open **Configure Settings → Kingdom Death: Monster → Open Living Glossary Manager** to import authorized JSON into native Journal pages. See [source-access findings, JSON format and Forge instructions](docs/living-glossary.md). Website scraping is not enabled; only an original demonstration dataset is included.
 
 See [Armor and Settlement update](docs/armor-settlement.md) for contribution accounting, Settlement tabs, portrait controls and the Forge manual test checklist.
+
+Settlement now includes manual Timeline and Monsters records, Milestones, Principle references, Living/Dead population lists and derived Death Count. See [Settlement records](docs/settlement-records.md) for field defaults, saving behavior and the Forge checklist.

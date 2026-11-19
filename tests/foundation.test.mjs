@@ -569,3 +569,89 @@ test('Survivor portrait reuses Actor image, native preview, ownership-gated pick
   const readonly=render('survivor',{...c,editable:false});const header=readonly.slice(0,readonly.indexOf('<nav'));assert.match(header,/portraitPreview/);assert.doesNotMatch(header,/data-action="actorImage"/);
   const css=fs.readFileSync(new URL('../styles/kingdom-death.css',import.meta.url),'utf8');assert.match(css,/kdm-avatar img[^}]+object-fit:contain/);assert.match(css,/kdm-location-cards img[^}]+aspect-ratio:1 \/ 2/);
 });
+
+test('expanded Settlement schema validates defaults and retains all 36 years through serialization',()=>{
+  const data=new SettlementData();assert.equal(data.validate(),true);
+  assert.equal(data.departingSurvivalGain,0);assert.equal(data.portcullisKey,false);assert.equal(Object.keys(data.lostSettlements).length,20);
+  assert.equal(Object.keys(data.timeline).length,36);assert.equal(Object.keys(data.milestones).length,10);assert.equal(Object.keys(data.principles).length,5);
+  const schema=SettlementData.defineSchema();assert.equal(schema.departingSurvivalGain.options.min,0);
+  for(let n=1;n<=36;n++) {
+    const row=data.timeline[`year${n}`];assert.equal(row.active,false);assert.equal(row.storyState,0);
+    for(const key of ['settlementEvents','storyEvents','developments','births','deaths','monster']) {assert.equal(row[key],'');assert.equal(schema.timeline.fields[`year${n}`].fields[key].options.blank,true);row[key]=`${key} ${n}`;}
+    row.active=n%2===0;row.storyState=n%3;
+  }
+  for(let n=1;n<=10;n++) {data.milestones[`row${n}`].checked=true;if(n>5)data.milestones[`row${n}`].label='Custom '+n;}
+  for(const group of ['quarry','nemesis']) {
+    assert.equal(Object.keys(data.monsterTracking[group]).length,10);
+    for(let n=1;n<=10;n++){const row=data.monsterTracking[group][`row${n}`];row.enabled=n%2===0;row.levels.level1=true;row.levels.level3=true;if(n>3)row.name=group+n;}
+  }
+  data.departingSurvivalGain=3;data.portcullisKey=true;data.lostSettlements.row20=true;
+  const restored=new SettlementData(JSON.parse(JSON.stringify(data)));assert.deepEqual(JSON.parse(JSON.stringify(restored)),JSON.parse(JSON.stringify(data)));assert.equal(restored.validate(),true);
+  const legacy=new SettlementData({population:17,notes:'old record',campaign:{phase:'hunt',party:{slot0:'old'},quarryId:'q',hunt:{survivorPosition:3,quarryPosition:8},showdownSceneId:'scene'}});
+  assert.equal(legacy.timeline.year36.active,false);assert.equal(legacy.population,17);assert.equal(legacy.campaign.quarryId,'q');assert.equal(legacy.principles.life,'');
+});
+
+test('Settlement template has exact table counts, compact lists, avatar, ordered tabs and static reference flow',async()=>{
+  const sheet=new SettlementSheet();sheet.isEditable=true;sheet.actor={name:'Named',img:'settlement.webp',system:new SettlementData(),items:{contents:[{id:'i',type:'innovation',name:'Innovation',img:'do-not-show.png',sort:0,system:{}}]}};
+  game.actors.contents=[];game.i18n={localize:k=>k};const context=await sheet._prepareContext({}),html=render('settlement',context);
+  assert.deepEqual(context.tabs.map(t=>t.id),['main','population','timeline','locations','monsters','settings']);
+  assert.equal(context.timeline.length,36);assert.equal(context.milestones.length,10);assert.equal(context.monsterGroups.flatMap(g=>g.rows).length,20);
+  assert.equal((html.match(/data-path="system.timeline.year\d+.active"/g)||[]).length,36);
+  assert.equal((html.match(/data-path="system.timeline.year\d+.storyState"/g)||[]).length,36);
+  assert.equal((html.match(/data-path="system.monsterTracking./g)||[]).length,60);
+  assert.equal((html.match(/name="system.milestones.row\d+.checked"/g)||[]).length,10);
+  assert.equal((html.match(/name="system.milestones.row\d+.label"/g)||[]).length,5);
+  assert.equal((html.match(/name="system.lostSettlements.row/g)||[]).length,20);
+  assert.equal((html.match(/aria-label="Death \d+"/g)||[]).length,40);
+  assert.equal((html.match(/data-kdm-drop="principle"/g)||[]).length,5);
+  assert.equal((html.match(/name="system.departingSurvivalGain"/g)||[]).length,1);
+  assert.doesNotMatch(html,/do-not-show.png/);assert.match(html,/src="settlement.webp"/);assert.match(html,/<em>When the settlement is named for the first time, <strong>returning survivors<\/strong> gain \+1 survival.<\/em>/);
+  assert.ok(html.indexOf('Survivors return')<html.indexOf('Settlement name'));assert.ok(html.indexOf('<h2>Principles')<html.indexOf('<h2>Innovations'));
+  const readonly=render('settlement',{...context,editable:false});assert.doesNotMatch(readonly,/data-action="(portraitChange|clearPrinciple|addItem|deleteItem)"/);assert.match(readonly,/<fieldset disabled>/);assert.match(readonly,/data-action="portraitPreview"/);
+});
+
+function recordButton(path) {return {dataset:{path},classList:{toggle(){}},setAttribute(){},replaceChildren(...nodes){this.icons=nodes;},ownerDocument:{createElement:()=>({setAttribute(){}})}};}
+test('Settlement buttons are independent, persist without form inputs, preserve tab, and reject read-only actions',async()=>{
+  foundry.utils.getProperty=(object,path)=>path.split('.').reduce((o,k)=>o?.[k],object);
+  const sheet=new SettlementSheet();sheet.isEditable=true;sheet.actor={isOwner:true,system:new SettlementData()};sheet.tabGroups.primary='timeline';
+  const a=recordButton('system.timeline.year1.active'),b=recordButton('system.timeline.year36.active'),story=recordButton('system.timeline.year36.storyState');
+  SettlementSheet.recordToggle.call(sheet,null,a);SettlementSheet.recordToggle.call(sheet,null,b);SettlementSheet.recordToggle.call(sheet,null,a);
+  assert.equal(sheet._draft.get(a.dataset.path),false);assert.equal(sheet._draft.get(b.dataset.path),true);
+  for(const expected of [1,2,0]) {SettlementSheet.recordToggle.call(sheet,null,story);assert.equal(sheet._draft.get(story.dataset.path),expected);assert.equal(story.icons.length,expected===1?2:expected===2?1:0);}
+  for(const n of [1,3])SettlementSheet.recordToggle.call(sheet,null,recordButton(`system.monsterTracking.quarry.row1.levels.level${n}`));
+  sheet._draft.set('system.timeline.year36.storyEvents','Text independent of icon');sheet._draft.set('system.portcullisKey',false);sheet._draft.set('system.milestones.row6.label','Custom');sheet._draft.set('system.monsterTracking.nemesis.row10.name','Custom foe');sheet._draft.set('system.lostSettlements.row20',false);
+  const data=sheet._processFormData(null,null,{object:{system:{notes:'untouched'}}});
+  assert.equal(data.system.timeline.year1.active,false);assert.equal(data.system.timeline.year36.active,true);assert.equal(data.system.timeline.year36.storyEvents,'Text independent of icon');assert.equal(data.system.timeline.year36.storyState,0);
+  assert.deepEqual(data.system.monsterTracking.quarry.row1.levels,{level1:true,level3:true});assert.equal(data.system.portcullisKey,false);assert.equal(data.system.lostSettlements.row20,false);assert.equal(data.system.notes,undefined);
+  assert.equal(sheet.tabGroups.primary,'timeline');sheet.isEditable=false;SettlementSheet.recordToggle.call(sheet,null,a);assert.equal(sheet._draft.get(a.dataset.path),false);
+  sheet.isEditable=true;sheet.actor.isOwner=false;SettlementSheet.recordToggle.call(sheet,null,b);assert.equal(sheet._draft.get(b.dataset.path),true);
+  sheet.actor.isOwner=true;SettlementSheet.recordToggle.call(sheet,null,recordButton('system.campaign.phase'));assert.equal(sheet._draft.has('system.campaign.phase'),false);
+});
+
+test('Principle drops reuse owned Innovations, replace/clear references without deletion and reject invalid drops',async()=>{
+  const {acceptsItem}=await import('../scripts/ui/item-drops.mjs');globalThis.ui={notifications:{warn(){}}};
+  const sheet=new SettlementSheet();sheet.isEditable=true;sheet.render=()=>{};
+  const items=[];let created=0;sheet.actor={uuid:'Actor.settlement',isOwner:true,system:new SettlementData(),items:{contents:items,get:id=>items.find(i=>i.id===id)},createEmbeddedDocuments:async(type,records)=>{const record={...records[0],id:'owned'+(++created),parent:sheet.actor,documentName:'Item',testUserPermission:()=>true};items.push(record);return [record];}};
+  const target={dataset:{kdmDrop:'principle',principle:'life'}},event=()=>({target:{closest:()=>target}});
+  const source={documentName:'Item',type:'innovation',testUserPermission:()=>true,toObject:()=>({type:'innovation',name:'New Innovation',system:{}})};
+  const a=await sheet._onDropItem(event(),source);assert.equal(created,1);assert.equal(sheet._draft.get('system.principles.life'),a.id);
+  await sheet._onDropItem(event(),a);assert.equal(created,1);
+  const b=await sheet._onDropItem(event(),source);assert.equal(sheet._draft.get('system.principles.life'),b.id);assert.equal(items.length,2);
+  SettlementSheet.clearPrinciple.call(sheet,null,target);assert.equal(sheet._draft.get('system.principles.life'),'');assert.equal(items.length,2);
+  assert.equal(acceptsItem(target,{documentName:'Item',type:'gear'},true),false);await sheet._onDropItem(event(),{...source,type:'gear'});assert.equal(created,2);
+  sheet.isEditable=false;await sheet._onDropItem(event(),source);SettlementSheet.clearPrinciple.call(sheet,null,target);assert.equal(created,2);
+  assert.equal(sheet.actor.system.principles.life,'');assert.equal(sheet.actor.system.campaign.phase,'settlement');
+});
+
+test('both portrait headers share control-row alignment and native image actions',()=>{
+  const css=fs.readFileSync(new URL('../styles/kingdom-death.css',import.meta.url),'utf8');
+  assert.match(css,/grid-template-rows:auto 40px auto/);assert.match(css,/kdm-name-field[^}]*grid-row:1 \/ 3/);assert.match(css,/kdm-header-sex[^}]*grid-row:1 \/ 3/);assert.match(css,/kdm-header-save[^}]*grid-column:4; grid-row:2/);
+  const survivor=render('survivor',{actor:{img:'survivor.webp'},system:new SurvivorData(),editable:true});assert.match(survivor,/kdm-survivor-header kdm-record-header/);assert.match(survivor,/class="kdm-name-field"/);assert.match(survivor,/class="kdm-name-reminder"/);assert.match(survivor,/src="survivor.webp"/);
+  const previous=foundry.applications.apps;let preview=0,picker=0,updated;
+  foundry.applications.apps={...previous,ImagePopout:class{render(){preview++;}},FilePicker:class{constructor(options){this.options=options;}render(){picker++;this.options.callback('new.webp');}}};
+  const actor={documentName:'Actor',isOwner:true,img:'old.webp',testUserPermission:()=>true,update:async data=>updated=data};const sheet={actor,isEditable:true};
+  SettlementSheet.DEFAULT_OPTIONS.actions.portraitPreview.call(sheet);SettlementSheet.DEFAULT_OPTIONS.actions.portraitChange.call(sheet);
+  assert.equal(preview,1);assert.equal(picker,1);assert.deepEqual(updated,{img:'new.webp'});
+  sheet.isEditable=false;actor.isOwner=false;SettlementSheet.DEFAULT_OPTIONS.actions.portraitChange.call(sheet);assert.equal(picker,1);
+  foundry.applications.apps=previous;
+});

@@ -59,3 +59,7 @@ Preserve each nonempty legacy keyword string as one tag because no delimiter con
 - Settlement keeps campaign fields in its schema but removes phase/party/quarry form controls. Population lists accessible World Survivors without inferring membership. Locations preserve Item sort order; drag reordering is deferred.
 - Survivor header previews actor.img and uses the existing ownership-checked native picker. Prototype token art remains independent.
 - Consulted official V14 Actor and Item document API pages on November 18, 2026: https://foundryvtt.com/api/v14/classes/foundry.documents.Actor.html and https://foundryvtt.com/api/v14/classes/foundry.documents.Item.html . This is not build-365 runtime verification.
+
+## Settlement record expansion
+
+Use stable year/row object keys for narrow edits instead of replacing large arrays. Keep manual toggles as schema fields, while death boxes and names are derived from accessible World Actors. Principle assignments reference owned Innovation IDs and save with the form; copying an external Item remains an immediate inventory action. No startup migration or automated rules effects. Shared grid rows replace individual Survivor header offsets. The V14 ApplicationV2 tab/action contract was checked against https://foundryvtt.com/api/v14/classes/foundry.applications.api.ApplicationV2.html ; actual 14.365 rendering remains unverified.

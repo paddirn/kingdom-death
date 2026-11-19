@@ -74,3 +74,7 @@ See [Proficiency and keyword migration](proficiency-keywords.md). BasicItemData 
 ## Armor and Settlement organization
 
 `EquipmentData` shares affinities between Gear and Armor without giving Armor a weapon profile. `KDMActor._preUpdate` performs pure contribution accounting from `rules/armor.mjs` and writes the ledger and current armor in the same Actor update. Settlement sections filter actual embedded Items; its Population tab resolves accessible World Actors live. See [accounting and verification](armor-settlement.md).
+
+## Expanded Settlement records
+
+`models/settlement.mjs` defines stable year/row schemas. `rules/settlement-records.mjs` supplies fixed labels, valid action paths and permission-filtered population/reference projections. The Settlement sheet owns drafts and in-place button presentation; no automatic campaign effects are introduced. See [Settlement records](settlement-records.md) for every new data path and migration expectations.

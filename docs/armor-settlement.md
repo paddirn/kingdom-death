@@ -18,7 +18,7 @@ Same-client inventory operations and Actor updates are queued; repeated owned dr
 
 ## Settlement and portrait
 
-Settlement, Population, Locations and Campaign Settings tabs keep selection and named-field drafts across rerenders. Only changed fields submit. Hidden phase, party and quarry are retained and do not invalidate ordinary form saves. Population is a live Observer-accessible World Survivor list, independent of the manual count. Existing Actor lifecycle refresh hooks rebuild names and sex suffixes. Innovations/Locations/Storage are filtered views of actual embedded Items; other legacy Item types remain stored, not deleted. Source Items are unaffected by removing owned copies. Location cards follow Item sort order; drag reordering is intentionally deferred.
+Settlement, Population, Timeline, Locations, Monsters and Campaign Settings tabs keep selection and named-field drafts across rerenders. Only changed fields submit. Hidden phase, party and quarry are retained and do not invalidate ordinary form saves. Population is a live Observer-accessible World Survivor list, independent of the manual count. Existing Actor lifecycle refresh hooks rebuild names and sex suffixes. Innovations/Locations/Storage are filtered views of actual embedded Items; other legacy Item types remain stored, not deleted. Source Items are unaffected by removing owned copies. Location cards follow Item sort order; drag reordering is intentionally deferred.
 
 The header portrait is actor.img, including Foundry's existing default. Click to preview, use Change to choose another image when owner. Native Actor updates refresh the header immediately and retain other form drafts. The prototype token is not changed.
 
@@ -36,3 +36,5 @@ Back up the world and install a package built from this branch into a test envir
 8. Drop Innovations and Locations from directory/compendium into their respective areas. Reject wrong types; repeat an owned-item drop without copying. Check image contain, four/three/two/one Location columns, stable sort order, native edit, cancel removal and confirmed owned-copy removal. Storage shows only Gear/Armor/Resources.
 9. Create, rename, change sex and delete a World Survivor. Population must update, omit inaccessible Actors and open permitted sheets. Manual Population never autochanges. Test Observer users: tabs/previews/accessible sheets work, all edits/drops/removals are blocked.
 10. Survivor portrait: default/custom image, 80×80 contain, full preview, owner-only Change, immediate update, all five tabs, unsaved name/sex persistence across picker rerender. Confirm prototype token texture is unchanged. Recheck Gear, Specials, Family and Monster behavior.
+
+The subsequent [Settlement record expansion](settlement-records.md) changes Innovations/Storage to compact lists and adds the manual campaign records. Location card behavior remains unchanged.
