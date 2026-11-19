@@ -3,6 +3,7 @@ export function dropTarget(element) { return element?.closest?.('[data-kdm-drop]
 export function acceptsItem(target,item,editable) {
   if(!editable || !target || item?.documentName!=="Item") return false;
   const type=target.dataset.kdmDrop;
+  if(type==="principle") return item.type==="innovation";
   if(type==="storage") return ["gear","armor","resource"].includes(item.type);
   if(type==="additionalProficiency") return item.type==="proficiency";
   if(type==="specials") return ["fightingArt","ability"].includes(item.type);
