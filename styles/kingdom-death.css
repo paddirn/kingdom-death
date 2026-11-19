@@ -63,9 +63,6 @@
 .kingdom-death .kdm-stepper input { width:calc(var(--kdm-digits, 2) * 1ch + 22px); min-width:0; flex:1; }
 .kingdom-death .kdm-stepper button { flex:0 0 22px; min-width:22px; padding:0; }
 .kingdom-death .kdm-number-display { width:calc(var(--kdm-digits, 2) * 1ch + 16px); }
-.kdm-survivor .kdm-survivor-header { display:flex; align-items:start; gap:12px; }
-.kdm-survivor .kdm-survivor-header > label:first-child { flex:1; }
-.kdm-survivor .kdm-survivor-header > label:last-child { flex:0 0 100px; }
 .kdm-survivor .kdm-survival-layout { display:grid; grid-template-columns:1fr auto; gap:10px; }
 .kdm-survivor .kdm-square-numbers input[type=number], .kdm-survivor .kdm-stat-boxes input[type=number] { width:52px; height:52px; flex:none; font:24px Georgia,serif; }
 .kdm-survivor .kdm-square-numbers .kdm-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -92,7 +89,6 @@
 .kingdom-death .kdm-radio-option input[type=radio] { appearance:auto; -webkit-appearance:radio; flex:0 0 16px; width:16px; height:16px; margin:4px; outline:1px solid var(--kdm-border); outline-offset:3px; accent-color:var(--kdm-accent); }
 .kingdom-death .kdm-radio-option input[type=radio]::before, .kingdom-death .kdm-radio-option input[type=radio]::after { content:none; }
 .kingdom-death .kdm-radio-option input[type=radio]:focus-visible { outline:2px solid var(--kdm-accent); }
-.kdm-survivor .kdm-survivor-header > label:last-child { flex:0 0 140px; }
 .kdm-survivor .kdm-survivor-header select { height:40px; }
 .kdm-survivor .kdm-tabs { top:110px; flex-wrap:wrap; }
 .kdm-survivor .kdm-square-numbers .kdm-stepper { display:grid; grid-template-columns:26px 26px; gap:2px; width:54px; }
@@ -174,15 +170,8 @@
 /* The shared header/tab wrapper stays visible without fragile fixed sticky offsets. */
 .kdm-survivor .kdm-sheet-top { position:sticky; top:0; z-index:3; background:var(--kdm-bg); }
 .kdm-survivor .kdm-sheet-top .kdm-survivor-header, .kdm-survivor .kdm-sheet-top .kdm-tabs { position:static; }
-.kdm-survivor .kdm-survivor-header { display:grid; grid-template-columns:minmax(0,1fr) 140px auto; align-items:start; }
-.kdm-survivor .kdm-header-save { margin-top:25px; height:40px; white-space:nowrap; }
 .kdm-survivor .kdm-hunt-xp .kdm-track-boxes { display:grid; grid-template-columns:repeat(10,18px); gap:5px; flex:none; }
 .kdm-survivor .kdm-track > label input.kdm-number-display { width:56px; min-width:56px; height:42px; padding:4px 6px; text-align:center; font-size:22px; box-sizing:border-box; }
-@container (max-width:650px) {
-  .kdm-survivor .kdm-survivor-header { grid-template-columns:1fr auto; }
-  .kdm-survivor .kdm-survivor-header > label:first-child { grid-column:1 / -1; }
-  .kdm-survivor .kdm-header-sex { max-width:160px; }
-}
 
 .kingdom-death .kdm-radio-group[aria-label="Rank"] {display:flex;flex-direction:row;gap:1rem;}
 .kdm-additional-proficiencies {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;}
@@ -250,16 +239,13 @@
 @container (max-width:500px) {.kdm-aftermath {grid-template-columns:1fr}}
 
 /* Settlement cards and Survivor portrait are scoped to system sheets. */
-.kingdom-death.kdm-survivor .kdm-survivor-header { grid-template-columns:80px minmax(0,1fr) auto auto; align-items:center; }
 .kingdom-death .kdm-avatar { width:80px; }
 .kingdom-death .kdm-avatar button:first-child { width:80px; height:80px; padding:0; border:1px solid var(--kdm-line,#665d50); }
 .kingdom-death .kdm-avatar img { width:100%; height:100%; object-fit:contain; border:0; }
 .kingdom-death .kdm-avatar button { font-size:11px; }
 .kingdom-death.kdm-settlement .tab { display:none; }
 .kingdom-death.kdm-settlement .tab.active { display:block; }
-.kingdom-death.kdm-settlement .kdm-header { display:flex; align-items:center; gap:12px; position:sticky; top:0; background:#201e1c; z-index:2; }
-.kingdom-death.kdm-settlement .kdm-header label { flex:1; }
-.kingdom-death .kdm-settlement-counters { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.kingdom-death .kdm-settlement-counters { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; }
 .kingdom-death .kdm-settlement-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
 .kingdom-death .kdm-settlement-cards article { min-width:0; border:1px solid #665d50; padding:5px; }
 .kingdom-death .kdm-settlement-cards article>button:first-child { display:flex; flex-direction:column; height:auto; width:100%; white-space:normal; }
@@ -268,8 +254,6 @@
 .kingdom-death .kdm-location-cards img { height:auto; aspect-ratio:1 / 2; object-fit:contain; }
 @container (max-width:640px) {
  .kingdom-death .kdm-location-cards { grid-template-columns:repeat(3,minmax(0,1fr)); }
- .kingdom-death.kdm-survivor .kdm-survivor-header { grid-template-columns:80px minmax(0,1fr) auto; }
- .kingdom-death.kdm-survivor .kdm-header-save { grid-column:2 / -1; }
 }
 @container (max-width:480px) {
  .kingdom-death .kdm-location-cards,.kingdom-death .kdm-settlement-counters,.kingdom-death .kdm-settlement-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -279,3 +263,67 @@
 .kingdom-death.kdm-settlement .kdm-square-numbers input[type=number] { width:52px; height:52px; font:24px Georgia,serif; text-align:center; }
 .kingdom-death.kdm-settlement .kdm-square-numbers .kdm-stepper input { grid-row:1; grid-column:1 / 3; }
 .kingdom-death.kdm-settlement .kdm-square-numbers .kdm-stepper button { grid-row:2; width:26px; min-width:0; }
+
+/* Shared header rows: labels, aligned 40px controls, then informational reminder. */
+.kingdom-death .kdm-record-header,
+.kingdom-death.kdm-survivor .kdm-survivor-header.kdm-record-header {
+ display:grid; grid-template-columns:80px minmax(0,1fr) 76px auto; grid-template-rows:auto 40px auto;
+ align-items:center; gap:4px 12px; padding:8px; background:var(--kdm-bg,#201e1c);
+}
+.kingdom-death.kdm-settlement .kdm-record-header { grid-template-columns:80px minmax(0,1fr) auto; }
+.kingdom-death .kdm-record-header .kdm-avatar { grid-column:1; grid-row:1 / 4; align-self:center; }
+.kingdom-death .kdm-record-header .kdm-name-field { grid-column:2; grid-row:1 / 3; }
+.kingdom-death .kdm-record-header .kdm-header-sex { grid-column:3; grid-row:1 / 3; }
+.kingdom-death .kdm-record-header .kdm-name-field,
+.kingdom-death .kdm-record-header .kdm-header-sex { display:grid; grid-template-rows:subgrid; align-self:stretch; gap:4px; min-width:0; }
+.kingdom-death .kdm-record-header .kdm-name-reminder { grid-column:2; grid-row:3; align-self:start; }
+.kingdom-death .kdm-record-header .kdm-header-save { grid-column:4; grid-row:2; align-self:center; }
+.kingdom-death.kdm-settlement .kdm-record-header .kdm-header-save { grid-column:3; }
+.kingdom-death .kdm-record-header input,.kingdom-death .kdm-record-header select,.kingdom-death .kdm-record-header .kdm-header-save { height:40px; margin:0; }
+.kingdom-death.kdm-settlement .kdm-tabs { flex-wrap:wrap; }
+.kingdom-death .kdm-settlement-counters>label { display:grid; grid-template-rows:2.5em auto; align-items:start; }
+.kingdom-death .kdm-settlement-flow { display:flex; list-style:none; overflow-x:auto; padding:4px; gap:24px; }
+.kingdom-death .kdm-settlement-flow li { position:relative; flex:0 0 105px; border:1px solid #776b5b; padding:6px; text-align:center; font-size:12px; }
+.kingdom-death .kdm-settlement-flow li>span { position:absolute; left:calc(100% + 5px); top:calc(50% - 10px); }
+.kingdom-death .kdm-settlement-list { list-style:none; padding:0; }
+.kingdom-death .kdm-settlement-list li { display:flex; gap:8px; align-items:center; border-bottom:1px solid #514b42; padding:3px 0; }
+.kingdom-death .kdm-settlement-list li>button:first-child { flex:1; text-align:left; white-space:normal; height:auto; }
+.kingdom-death .kdm-principle { display:grid; grid-template-columns:100px minmax(0,1fr) 30px; gap:6px; align-items:center; padding:6px; border:1px dashed #776b5b; margin-bottom:5px; min-height:36px; }
+.kingdom-death .kdm-principle button { white-space:normal; height:auto; }
+.kingdom-death .kdm-record-checks { display:flex; flex-wrap:wrap; gap:5px; }
+.kingdom-death .kdm-lost-settlements { margin-top:10px; }
+.kingdom-death .kdm-record-checks input,.kingdom-death .kdm-death-count input { width:18px; height:18px; flex:none; margin:0; }
+.kingdom-death input.kdm-emphasized-check { outline:2px solid currentColor; outline-offset:0; }
+.kingdom-death .kdm-death-scroll,.kingdom-death .kdm-timeline-scroll { overflow-x:auto; }
+.kingdom-death .kdm-death-count { display:grid; grid-template-columns:repeat(20,18px); gap:6px; padding:3px; width:max-content; }
+.kingdom-death .kdm-death-count input:disabled { opacity:1; }
+.kingdom-death .kdm-milestones { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+.kingdom-death .kdm-milestones>div { display:flex; align-items:center; gap:4px; font-size:12px; }
+.kingdom-death .kdm-milestones input[type=text],.kingdom-death .kdm-milestones input:not([type]) { min-width:0; }
+.kingdom-death .kdm-timeline { min-width:1200px; table-layout:fixed; margin:0; }
+.kingdom-death .kdm-timeline th:first-child { width:80px; position:sticky; left:0; z-index:1; background:var(--kdm-bg,#201e1c); }
+.kingdom-death .kdm-timeline th:nth-child(3) { width:240px; }
+.kingdom-death .kdm-timeline td { padding:4px; }
+.kingdom-death .kdm-timeline input { width:100%; min-width:0; }
+.kingdom-death .kdm-story-event { display:flex; align-items:center; gap:4px; }
+.kingdom-death .kdm-story-toggle { flex:0 0 48px; width:48px; height:32px; padding:2px; }
+.kingdom-death .kdm-record-toggle { width:30px; min-width:30px; height:30px; padding:0; background:#24211d; color:#eee7d9; }
+.kingdom-death .kdm-record-toggle.active { background:#eee7d9; color:#24211d; }
+.kingdom-death .kdm-monster-records { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.kingdom-death .kdm-monster-record { display:grid; grid-template-columns:20px minmax(0,1fr) auto; gap:5px; align-items:center; margin:6px 0; }
+.kingdom-death .kdm-monster-record-heading { display:flex; justify-content:space-between; font-weight:bold; }
+.kingdom-death .kdm-levels { display:flex; gap:3px; }
+@container (max-width:600px) {
+ .kingdom-death .kdm-monster-records { grid-template-columns:1fr; }
+ .kingdom-death .kdm-milestones { min-width:580px; }
+ .kingdom-death .kdm-settlement-counters { grid-template-columns:repeat(3,minmax(0,1fr)); }
+ .kingdom-death .kdm-record-header,.kingdom-death.kdm-survivor .kdm-survivor-header.kdm-record-header { column-gap:6px; grid-template-columns:80px minmax(100px,1fr) 60px auto; }
+ .kingdom-death.kdm-settlement .kdm-record-header { grid-template-columns:80px minmax(100px,1fr) auto; }
+ .kingdom-death .kdm-header-save { font-size:11px; padding:4px; }
+}
+.kingdom-death.kdm-settlement [data-tab=timeline]>fieldset>section { overflow-x:auto; }
+.kingdom-death.kdm-settlement .window-content { container-type:inline-size; }
+.kingdom-death.kdm-settlement .kdm-body { min-width:0; }
+.kingdom-death.kdm-settlement .kdm-record-header { position:sticky; top:0; z-index:3; }
+
+@container (max-width:420px) { .kingdom-death .kdm-settlement-counters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
