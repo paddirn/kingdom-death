@@ -2,7 +2,7 @@
 
 The client setting **Enable CCM Interaction on Token Layer** defaults to true and requires active `complete-card-management`. The previous Alt+C keybinding and temporary layer switching have been removed. No shortcut is registered. No card/deck data is changed on activation.
 
-This is an implementation candidate, not a verified Foundry 14.365 integration. Do not release it until the mouse acceptance checklist below passes. Offline contract tests cannot establish PIXI hit testing or inherited Foundry mouse-manager behavior.
+Published in v0.1.14 at the project owner's request after PR #15 was merged. This is not a runtime-verified Foundry 14.365 integration; the mouse acceptance checklist below remains outstanding. Offline contract tests cannot establish PIXI hit testing or inherited Foundry mouse-manager behavior.
 
 ## Why the previous adapter did not meet the requirement
 
@@ -51,4 +51,4 @@ Use a backed-up test world with CCM v3.0.3 and this development branch. Reload e
 
 After each step confirm `canvas.activeLayer === canvas.tokens` and no duplicate operation or unexpected token movement. Check token targeting, HUD and attack macros. Click empty space and just outside card bounds; no card action should occur.
 
-Repeat after a scene change and canvas redraw. Test hidden/unowned cards, a non-GM owner, no active GM, two clients, disabled integration, and CCM disabled/uninstalled. Test native Card-layer interaction with the setting off and on to detect restoration regressions. Record Foundry/CCM versions, each result and any console stack before removing draft status or publishing.
+Repeat after a scene change and canvas redraw. Test hidden/unowned cards, a non-GM owner, no active GM, two clients, disabled integration, and CCM disabled/uninstalled. Test native Card-layer interaction with the setting off and on to detect restoration regressions. Record Foundry/CCM versions, each result and any console stack before claiming runtime compatibility.
