@@ -22,7 +22,7 @@ Official V14 references consulted: [PlaceableObject](https://foundryvtt.com/api/
 
 ## Adapter design
 
-`scripts/integrations/ccm.mjs` modifies only the current CCM layer, its card instances and the current Token layer's lifecycle methods. It does not patch any prototype, replace a native card action or call layer activation methods.
+`scripts/integrations/ccm.mjs` registers CCM through the shared `cross-layer.mjs` bridge, which modifies only the current CCM layer, its card instances and the current Token layer's lifecycle methods. It does not patch any prototype, replace a native card action or call layer activation methods.
 
 While Tokens are active, each non-preview card receives a scoped `layer` view. Only that view reports `active: true`; `canvas.cards.active` and `canvas.activeLayer` are unchanged. All other properties, control collections, HUD and preview state delegate to the real CCM layer. Accessors and methods run against the real instance, including private-field access. Original permission handlers are retained rather than replaced with unconditional permissions.
 
@@ -52,3 +52,5 @@ Use a backed-up test world with CCM v3.0.3 and this development branch. Reload e
 After each step confirm `canvas.activeLayer === canvas.tokens` and no duplicate operation or unexpected token movement. Check token targeting, HUD and attack macros. Click empty space and just outside card bounds; no card action should occur.
 
 Repeat after a scene change and canvas redraw. Test hidden/unowned cards, a non-GM owner, no active GM, two clients, disabled integration, and CCM disabled/uninstalled. Test native Card-layer interaction with the setting off and on to detect restoration regressions. Record Foundry/CCM versions, each result and any console stack before claiming runtime compatibility.
+
+The shared bridge now also supports independently enabled Tile interaction. Token lifecycle subscribers are removed independently, so disabling Tiles does not undo CCM hooks (or vice versa). See [canvas-tools.md](canvas-tools.md).
