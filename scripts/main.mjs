@@ -1,3 +1,4 @@
+import { registerCCMIntegration } from "./integrations/ccm.mjs";
 import { reconcileArmor } from "./rules/armor.mjs";
 import { KDMActor } from "./documents/actor.mjs";
 import { LivingGlossaryManager } from "./glossary/manager.mjs";
@@ -16,6 +17,7 @@ import { KDMItemSheet } from "./sheets/item.mjs";
 import { CampaignController } from "./campaign/controller.mjs";
 import { CampaignDashboard } from "./campaign/dashboard.mjs";
 Hooks.once("init", () => {
+  registerCCMIntegration();
   CONFIG.Actor.documentClass = KDMActor;
   CONFIG.Item.documentClass = KDMItem;
   Object.assign(CONFIG.Actor.dataModels, {survivor: SurvivorData, monster: MonsterData, settlement: SettlementData});
