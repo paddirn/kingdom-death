@@ -35,6 +35,7 @@ class Sheet {
   async _onRender() {}
   async _processSubmitData(event,form,data) { if(this.failSave) throw new Error("save failed"); this.saved=data; return data; }
 }
+globalThis.CONST={KEYBINDING_PRECEDENCE:{NORMAL:0}};
 const registered = [], once = new Map(), settings = [];
 globalThis.foundry = {
   data: {fields: {ArrayField, NumberField: Field, StringField: Field, FilePathField: Field, BooleanField: Field, SchemaField: Schema}},
@@ -44,7 +45,7 @@ globalThis.foundry = {
 };
 globalThis.Hooks = {once: (key, fn) => once.set(key, fn), on: () => {}};
 globalThis.CONFIG = {Actor: {dataModels: {}}, Item: {dataModels: {}}};
-globalThis.game = {system: {version: JSON.parse(fs.readFileSync(new URL("../system.json",import.meta.url))).version}, settings: {get:()=>"", register: (...args) => settings.push(args), registerMenu: (...args) => settings.push(args)}, actors: {contents: []}};
+globalThis.game = {keybindings:{register(){}},system: {version: JSON.parse(fs.readFileSync(new URL("../system.json",import.meta.url))).version}, settings: {get:()=>"", register: (...args) => settings.push(args), registerMenu: (...args) => settings.push(args)}, actors: {contents: []}};
 await import("../scripts/main.mjs");
 const { SurvivorData } = await import("../scripts/models/survivor.mjs");
 const { MonsterData } = await import("../scripts/models/monster.mjs");
