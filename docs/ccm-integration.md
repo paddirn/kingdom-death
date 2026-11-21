@@ -1,35 +1,54 @@
-# Optional CCM canvas access
+# Simultaneous CCM pointer interaction (runtime acceptance pending)
 
-Enable CCM Interaction on Token Layer is a client setting (default true). Without active `complete-card-management` it does nothing. From Tokens, hold **Alt+C** for native CCM controls, complete the gesture, then release to return to Tokens. Rebind in Configure Controls if the browser/OS reserves Alt+C. Keep the shortcut held through double-clicks and HUD actions. Existing CCM modifier meanings still apply; a non-modified key can be assigned if Alt conflicts with the desired native gesture.
+The client setting **Enable CCM Interaction on Token Layer** defaults to true and requires active `complete-card-management`. The previous Alt+C keybinding and temporary layer switching have been removed. No shortcut is registered. No card/deck data is changed on activation.
 
-This is the requested modifier fallback, **not full simultaneous interaction with the Token layer remaining active**. Tokens take priority normally; CCM cards take priority during the held shortcut. Background clicks while held follow ordinary CCM layer behavior. The adapter performs no custom hit-testing, pointer interception, synthetic events or card operations. Only one native layer is active. Native CCM bounds, visibility, ownership, flipping, rotation, stacking, HUD and region permissions remain authoritative.
+This is an implementation candidate, not a verified Foundry 14.365 integration. Do not release it until the mouse acceptance checklist below passes. Offline contract tests cannot establish PIXI hit testing or inherited Foundry mouse-manager behavior.
 
-## Source audit
+## Why the previous adapter did not meet the requirement
 
-Inspected MetaMorphic-Digital/complete-card-management main at `8de0e8cdf4554da8ae1486fbd50dfd6160f11aa7` (manifest minimum 14.365):
+The previous `CCMAccess.begin()` called `canvas.cards.activate()`, and `reset()` called `tokens.activate()`. Only one layer was interactive at a time, and normal layer deactivation could release selection/HUD state. Enabling pointer events alone also does not establish selection, permission predicates, drag previews or control collections.
 
-- `src/module/canvas/CardLayer.mjs`: PlaceablesLayer named `cards`, exposed as canvas.cards; controllable/rotatable objects, native selection tool and preview container.
-- `CardObject.mjs`: PlaceableObject; frame interaction hit area; isVisible and refresh state; inherited selection/pointer manager; `_onClickLeft2` opens ImagePopout; `_canDragLeftStart` checks locked individual cards; `_initializeDragLeft` uses layer.controlled and layer.preview, handles locked deck draws with active GM; `_onDragLeftDrop` commits through the existing private workflow and placeCard API.
-- `MoveCardBehavior.mjs`: CCM region entry/exit events use the initiating authorized client or active GM for allocation.
-- `ControlsLayer.mjs`: active CardLayer-specific handling and currentMouseManager cancellation.
+## Source inspected
 
-No documented inactive-placeable interaction API was found. Making inactive placeables interactive would not establish correct active-layer control, previews and mouse-manager behavior. Full simultaneous support is therefore withheld rather than patching prototypes or replacing CCM handlers. Native activate() is the only interaction entry point used by the adapter.
+CCM upstream **v3.0.3**, commit [`8de0e8cdf4554da8ae1486fbd50dfd6160f11aa7`](https://github.com/MetaMorphic-Digital/complete-card-management/tree/8de0e8cdf4554da8ae1486fbd50dfd6160f11aa7), whose manifest minimum is 14.365. This is the upstream source, not a verified copy of the module installed in the user's Forge world.
 
-## Lifecycle and limitations
+- `src/module/canvas/CardLayer.mjs`: `PlaceablesLayer`, `canvas.cards`, native controlled collection and preview container. `_draw()` builds passive image meshes separately from card placeables, sets the scene-wide layer hit area, and draws the objects container. Selection tool activation calls native `activate()`.
+- `CardObject.mjs`: native frame interaction bounds; `isVisible` checks hidden state/Observer access; `_refreshState()` uses `this.layer.active` for background display. Selection, hover and mouse-manager permissions are inherited from Foundry. `_onClickLeft2()` opens the native image viewer. `_initializeDragLeft()` uses `layer.controlled`, `layer.preview`, `_canDrag()` and native locked-deck drawing checks; `_onDragLeftDrop()` enters CCM's private commit workflow and `placeCard()`.
+- `src/module/apps/CardHud.mjs`: flip, rotate, shuffle, lock and visibility actions. Rotation has native left/right mouse controls. `helpers.mjs::generateUpdates()` reads the real `canvas.cards.controlled` collection.
+- `MoveCardBehavior.mjs`: region allocation uses CCM events and initiating-client/active-GM permissions.
+- `ControlsLayer.mjs::_onLongPress()` explicitly checks `canvas.activeLayer instanceof CardLayer`. This adapter does not change that check: long-press behavior stays Token-layer behavior. It is not used as a substitute for ordinary clicks or drags.
 
-`scripts/integrations/ccm.mjs` is isolated from sheets and card data. Repeated keydown does not activate twice. Releasing the key during a pointer gesture defers restoration until pointerup and the next task, allowing native dispatch first. Token drags already in progress cannot start this mode. Explicit user changes to another layer are preserved. Scene identity guards prevent restoring stale layers. Canvas teardown/redraw, blur and setting changes reset the session; listeners are abortable and replaced, never stacked. Disable the setting to restore normal layer navigation. Native deactivation can release controlled selections; this adapter does not persist or reconstruct selection or an open card HUD. No network requests or additional card mutations are made.
+Official V14 references consulted: [PlaceableObject](https://foundryvtt.com/api/v14/classes/foundry.canvas.placeables.PlaceableObject.html), [PlaceablesLayer](https://foundryvtt.com/api/v14/classes/foundry.canvas.layers.PlaceablesLayer.html), [InteractionLayer](https://foundryvtt.com/api/v14/classes/foundry.canvas.layers.InteractionLayer.html). These document the interfaces but do not expose all build-365 implementation details. No licensed build-365 runtime/core source was available locally.
 
-No Foundry V14 build 365 runtime is available here. Offline tests validate state transitions and lifecycle only. Async locked-deck/region workflows, multi-client behavior and visual bounds are **not runtime verified**.
+## Adapter design
 
-## Forge manual acceptance checklist
+`scripts/integrations/ccm.mjs` modifies only the current CCM layer, its card instances and the current Token layer's lifecycle methods. It does not patch any prototype, replace a native card action or call layer activation methods.
 
-On a backed-up test world with V14.365 and current CCM:
+While Tokens are active, each non-preview card receives a scoped `layer` view. Only that view reports `active: true`; `canvas.cards.active` and `canvas.activeLayer` are unchanged. All other properties, control collections, HUD and preview state delegate to the real CCM layer. Accessors and methods run against the real instance, including private-field access. Original permission handlers are retained rather than replaced with unconditional permissions.
 
-1. Without the shortcut, select/move/target Survivor and Monster tokens, right-click token HUDs, drag tokens, and run existing attack macros while cards are visible.
-2. Hold Alt+C from Tokens: select cards, double-click image viewer, right-click native HUD, flip/rotate/stack using CCM controls. Release and verify return to Tokens. Rebind if needed.
-3. Drag a card, release the shortcut mid-drag, finish dropping. Ensure only one move and no premature return. Test cancellation/Escape, blur and drawing from a locked deck with and without an active GM.
-4. Drop cards into Allocate Card regions. Check native allocation, source/destination contents and exactly one operation; test restricted/hidden cards as a player.
-5. Overlap tokens and cards: Tokens normally, CCM while held. Verify clicks beyond visible card bounds follow native background behavior and no hidden card becomes selectable.
-6. Switch scenes, redraw canvas, change tools manually while held, disable the setting, repeat key presses and reconnect. No stuck layer or duplicate operations/listeners should remain.
-7. Disable/uninstall CCM and launch the system. Verify no errors or changed Token behavior. Re-enable CCM and reload, then repeat.
-8. Have two players independently use the shortcut and interact with separate/shared cards; check native permissions, locked-deck drawing and allocation. Record results before claiming runtime compatibility.
+The layer and objects containers are passive with interactive children. Individual card event modes are enabled, retaining native hit areas, visibility and permission handling. There are no DOM listeners, synthesized events, overlap rules or empty-canvas targets. Render refreshes reapply card interactivity, and the layer's `createObject()` result is prepared before it is drawn. Previews retain the real layer.
+
+Lifecycle wrappers restore prior display state *before* native activation/deactivation/draw executes, then reconcile afterward. Canvas teardown removes the instance overrides; canvasReady rebuilds them. Repeated attachment removes the old wrappers first. Setting changes restore/rebuild immediately. Destroyed cards are pruned. Without active CCM nothing is patched. Native behavior on other canvas layers is retained.
+
+## Outstanding runtime risks — do not interpret tests as acceptance
+
+The layer view is a narrow compatibility patch, not a documented CCM extension point. Its key assumption is that inherited Foundry card control/hover/drag gates consult the card's `layer` view. A gate which instead directly reads `canvas.activeLayer`, or retains a different layer reference, may still reject inactive-card interaction. The V14 API pages do not establish those method bodies. If the checklist fails, inspect build 365's `PlaceableObject.isInteractable`, `_canControl`, `_canHover`, `_canHUD`, `_canDrag`, `control`, `_createInteractionManager` and MouseInteractionManager permission callbacks to identify the exact failing condition. Do not bypass ownership checks or add layer switching to hide it.
+
+Global keyboard/wheel dispatch still belongs to Tokens; card rotation should be tested through CCM's native mouse HUD controls. Native HUD dismissal, drag preview rendering, locked-deck draws, allocation, stacking and multi-client races remain unverified. No claim is made that full simultaneous interaction has passed acceptance, or that CCM inherently prevents it.
+
+## Required acceptance on Forge, Foundry 14.365
+
+Use a backed-up test world with CCM v3.0.3 and this development branch. Reload every client. Enable the client setting and start with Tokens selected. Without touching layer controls or holding a key:
+
+1. Move a Survivor token.
+2. Click a CCM deck and use its normal controls.
+3. Draw a card (include a locked deck with an active GM).
+4. Drag it into an Allocate Card region; verify exactly one native allocation.
+5. Select another card.
+6. Inspect it by double-click; open its right-click HUD, flip and rotate it; test native stacking.
+7. Move the White Lion token.
+8. Draw another card.
+
+After each step confirm `canvas.activeLayer === canvas.tokens` and no duplicate operation or unexpected token movement. Check token targeting, HUD and attack macros. Click empty space and just outside card bounds; no card action should occur.
+
+Repeat after a scene change and canvas redraw. Test hidden/unowned cards, a non-GM owner, no active GM, two clients, disabled integration, and CCM disabled/uninstalled. Test native Card-layer interaction with the setting off and on to detect restoration regressions. Record Foundry/CCM versions, each result and any console stack before removing draft status or publishing.
