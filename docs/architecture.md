@@ -78,3 +78,9 @@ See [Proficiency and keyword migration](proficiency-keywords.md). BasicItemData 
 ## Expanded Settlement records
 
 `models/settlement.mjs` defines stable year/row schemas. `rules/settlement-records.mjs` supplies fixed labels, valid action paths and permission-filtered population/reference projections. The Settlement sheet owns drafts and in-place button presentation; no automatic campaign effects are introduced. See [Settlement records](settlement-records.md) for every new data path and migration expectations.
+
+## Canvas tools
+
+`integrations/cross-layer.mjs` contains the shared instance-only placeable bridge used by CCM and Tiles, with reference-counted lifecycle subscribers. `integrations/tiles.mjs` adds independent client configuration and background interaction ordering. Existing CCM actions remain in CCM.
+
+`rules/monster-movement.mjs` is the pure orthogonal full-footprint search. `canvas/movement-context.mjs` supplies native grid/collision/visibility adapters; `canvas/monster-movement.mjs` owns local graphics, HUD, optional keybinding and document hooks. No overlay geometry or UI state enters campaign documents. See [canvas-tools.md](canvas-tools.md) for permissions, supported grids and runtime acceptance.

@@ -78,3 +78,7 @@ GMs can open **Configure Settings → Kingdom Death: Monster → Open Living Glo
 See [Armor and Settlement update](docs/armor-settlement.md) for contribution accounting, Settlement tabs, portrait controls and the Forge manual test checklist.
 
 Settlement now includes manual Timeline and Monsters records, Milestones, Principle references, Living/Dead population lists and derived Death Count. See [Settlement records](docs/settlement-records.md) for field defaults, saving behavior and the Forge checklist.
+
+### Canvas controls
+
+Tokens, CCM cards and Tiles have independently configurable cross-layer interaction. Monster token HUDs include **Show Movement Range**, a local full-footprint orthogonal preview with adjustable opacity and an optional configurable shortcut. See [canvas tools](docs/canvas-tools.md) for usage, supported geometry, player-information limits and the Foundry V14 acceptance checklist. These additions have offline regression coverage; actual V14 mouse/visual behavior remains unverified here.
