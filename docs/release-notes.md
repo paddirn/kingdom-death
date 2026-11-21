@@ -1,9 +1,9 @@
-# v0.1.12 — Settlement records and portrait headers
+# v0.1.13 — Optional CCM canvas access
 
-Settlement adds Timeline and Monsters tabs, a 36-year timeline with independent year and Story Event toggles, ten Milestones, Quarry/Nemesis level records, five Principle references to owned Innovations, Departing Survival Gain, Portcullis Key and twenty Lost Settlement checks. All campaign records remain manual.
+Adds the client setting Enable CCM Interaction on Token Layer. With Complete Card Management active, hold Alt+C from Tokens to temporarily use CCM's native card layer; release to return after the pointer gesture. The shortcut can be rebound in Configure Controls. Without active CCM the integration does nothing.
 
-Population separates accessible living and dead World Survivors and derives forty read-only death boxes plus the actual count. Innovations and Storage use compact lists. Settlement gains a native Actor portrait, naming reminder and static phase reference. Survivor and Settlement headers share aligned control rows.
+This is the modifier-key fallback, not simultaneous interaction while Tokens remain active. Card selection, dragging, locked-deck drawing, flipping, rotation, stacking and region allocation remain owned by CCM. No card data, deck contents or core prototypes are changed. Native layer deactivation may release card selection or HUD state.
 
-New schema fields use safe defaults and stable year/row keys; no destructive migration or startup rewrite is required. Existing campaign assignments, Actor/Item records and Armor accounting are preserved. Principle assignment changes save with the form; external Item copies are created immediately. Replacing or clearing a reference does not delete an Item. Dirty fields and unchecked values survive tab changes and rerenders.
+The adapter guards repeated keys, token drags in progress, manual layer changes and scene changes, and replaces listeners on canvas redraw. See docs/ccm-integration.md for the source audit, limitations and manual Forge checklist.
 
-Validation: 123 JavaScript tests, 9 Python packaging tests, syntax/template/manifest/module checks and ZIP validation. Foundry V14 build 365 runtime and visual alignment remain unverified. Back up the world, update through Forge, restart the game and reload clients. Follow docs/settlement-records.md for the full manual checklist. Existing cross-client simultaneous-edit limitations remain.
+Validation: 126 JavaScript tests, 9 Python packaging tests, syntax/template/manifest/module checks and ZIP validation. Foundry V14 build 365 runtime is unverified, including locked draws, Allocate Card regions and multiplayer behavior. Update through Forge, restart the game and reload clients before testing.
