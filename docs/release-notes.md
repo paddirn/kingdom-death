@@ -1,11 +1,9 @@
-# v0.1.15 — Tile interaction and Monster movement range
+# v0.1.16 — Tile hover rendering fix
 
-Includes merged PR #16. Adds independently configurable Tile interaction alongside Tokens and CCM cards, using the shared instance-scoped layer adapter. Native handlers, locks and permissions remain in use; no layer-switching shortcut is introduced.
+Includes merged PR #17. Separates Tile interaction permission checks from native artwork rendering. Tile hover, previews and renderers now see the real layer state. Removes the Tile adapter's forced visibility, render refresh requests and depth changes. CCM and the shared cross-layer adapter are unchanged.
 
-Monster token HUDs gain Show Movement Range, with an optional configurable shortcut and adjustable opacity. The local preview uses orthogonal full-footprint searches, scene bounds, token obstacles and native collision checks. It updates when relevant documents change and creates no permanent Scene geometry.
+Validation: 158 JavaScript tests, 9 Python packaging tests, syntax/import/template/manifest checks and ZIP inspection. Regression coverage includes background/foreground/transparent Tile rendering contracts, hover/leave, previews, cleanup and independent CCM behavior.
 
-Supported geometry: square grids, aligned integer footprints and Movement 0–99. Player previews use visible information and ignore hidden tokens to avoid disclosing their locations. Full-body collision probes are conservative around one-way walls. See [canvas tools](https://github.com/paddirn/kingdom-death/blob/v0.1.15/docs/canvas-tools.md) for limitations and the runtime acceptance checklist.
+Actual Foundry V14 build 365 mouse behavior and resolution of the reported disappearance remain unverified in the development environment. See [the Tile hover checklist](https://github.com/paddirn/kingdom-death/blob/v0.1.16/docs/tile-hover-fix.md) for runtime checks. Foundry target remains 14.365.
 
-Validation: 153 JavaScript tests, 9 Python packaging tests, syntax/import/template/manifest checks and ZIP inspection. Actual Foundry V14 build 365 mouse interactions and visual appearance remain unverified in the development environment. Foundry target remains 14.365; no dependency on CCM is required to run the system.
-
-Update the system through Forge, restart the game and reload all clients. Enable Tile Interaction on Token Layer and Enable CCM Interaction on Token Layer operate independently. Right-click a Monster token to access Show Movement Range.
+Update through Forge, restart the game and fully reload every client to remove the previous version's instance patches. Check Tile hover, selection, dragging, configuration and right-click controls alongside tokens and CCM cards.
