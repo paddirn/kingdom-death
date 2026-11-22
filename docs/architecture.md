@@ -81,6 +81,6 @@ See [Proficiency and keyword migration](proficiency-keywords.md). BasicItemData 
 
 ## Canvas tools
 
-`integrations/cross-layer.mjs` contains the shared instance-only placeable bridge used by CCM and Tiles, with reference-counted lifecycle subscribers. `integrations/tiles.mjs` adds independent client configuration and background interaction ordering. Existing CCM actions remain in CCM.
+`integrations/cross-layer.mjs` contains the shared instance-only placeable bridge used by CCM and Tiles, with reference-counted lifecycle subscribers. `integrations/tiles.mjs` adds independent client configuration and Tile-specific permission-gate scoping, leaving native artwork visibility and display ordering untouched. Existing CCM actions remain in CCM.
 
 `rules/monster-movement.mjs` is the pure orthogonal full-footprint search. `canvas/movement-context.mjs` supplies native grid/collision/visibility adapters; `canvas/monster-movement.mjs` owns local graphics, HUD, optional keybinding and document hooks. No overlay geometry or UI state enters campaign documents. See [canvas-tools.md](canvas-tools.md) for permissions, supported grids and runtime acceptance.

@@ -6,11 +6,13 @@ Target: Foundry V14 build 365. No system version bump or release is part of this
 
 **Enable Tile Interaction on Token Layer** is a client checkbox, enabled by default. It is independent of **Enable CCM Interaction on Token Layer**, and does not require CCM.
 
-The shared `scripts/integrations/cross-layer.mjs` extracts the existing CCM layer-view adapter. The CCM wrapper retains its settings, native handlers and card workflows. `tiles.mjs` applies the same instance-scoped bridge to `canvas.tiles`. Only a placeable's view of its layer reports interaction-active; the real active canvas layer is unchanged. Permission predicates, lock handling, frame/handle hit areas, transparency behavior, drag, configuration, HUD and resize handlers remain native. There are no synthetic pointer events, hotkeys or temporary activations.
+The shared `scripts/integrations/cross-layer.mjs` retains the existing CCM behavior. Tiles reuse only its attachment, lifecycle subscriptions and pointer-property restoration. `tiles.mjs` has its own preparation and synchronization policy.
 
-A single instance lifecycle wrapper dispatches to subscribers. Removing either integration leaves the other subscribed, regardless of enable/disable order. This is necessary because both integrations observe Token activation/deactivation/draw. Canvas teardown restores descriptors and display properties; new placeables and render-state refreshes receive the same bridge.
+Tile native permission predicates and `isInteractable` see an interaction-enabled layer view only while those synchronous checks execute. Hover callbacks, selection/drag callbacks, previews and rendering see the actual layer. The adapter does not replace hover/render handlers, request render flags, set object-container visibility, touch meshes, change z-index or call sortChildren. After native draw/refresh hooks it reconciles only `eventMode` and `interactiveChildren`.
 
-Tile interaction controls are sorted beneath Token and CCM controls when they share a parent. The actual artwork/meshes, token bounds and card hit areas are unchanged. Passive containers cannot become empty-canvas targets. A tile itself remains clickable in unobstructed space, including a large background tile; overlapping native token/card targets take priority. The original tile-control z-index returns when leaving Tokens or disabling the integration. If another module reparents layers or changes their hit areas, interaction order requires testing with that module.
+Native locks, ownership and visibility predicates still decide permission; no gate unconditionally returns true. Native hit areas and display ordering are retained. There are no synthetic events, hotkeys or temporary layer activations. Token/card overlap behavior and native Tile controls need the runtime checks below, especially with third-party layer sorting.
+
+A single instance lifecycle wrapper dispatches to independent subscribers. Removing either integration leaves the other subscribed. Teardown restores only Tile properties the adapter actually patched; it cannot replay stale mesh/container visibility. See [tile-hover-fix.md](tile-hover-fix.md) for the rendering regression investigation.
 
 ## Monster range
 
