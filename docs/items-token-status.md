@@ -102,3 +102,35 @@ rendering, overlay lifecycle and permission routing with doubles. Actual Foundry
 rendering, mouse interactions, multiplayer synchronization and HUD appearance
 have not been runtime verified. PR #18 was merged and v0.1.17 publication was authorized with the Tile
 replacement explicitly unresolved. Publication does not establish runtime acceptance.
+
+## Follow-up: build 365 diagnostic evidence
+
+The user's v0.1.17 runtime snapshot showed 25 Tiles beneath an invisible
+`canvas.tiles.objects` container, with 24 unlocked Tiles reporting interactable.
+Their artwork meshes belong to PrimaryCanvasGroup. Installed build 365 source
+also showed that native control() rejects inactive layers before checking
+permissions. The previous tests missed both the hidden ancestor and the
+additional control() gate.
+
+The follow-up adapter exposes only the interaction objects container during
+Token-layer lifecycle synchronization and restores it before native layer
+transitions or on disable. It does not change Tile or mesh visibility, alpha,
+depth, locking, hit areas, documents, or the global active layer. This revises
+the earlier blanket ban on container visibility changes based on the observed
+separation between interaction objects and artwork.
+
+Native control() now gets the same synchronous layer-active view as permission
+checks; its native permission checks still run. Native hover, _onControl,
+_refreshState and _refreshVisibility execute with the genuine layer even if
+invoked synchronously during control. These wrappers do not request extra
+refreshes or replace render logic. CCM/shared cross-layer code is unchanged.
+
+173 Node tests and 9 Python tests pass, including hidden-container routing,
+control gates, reentrant rendering, exception cleanup and layer-transition
+restoration. These are contract tests, not a licensed Foundry runtime.
+
+This is a targeted candidate fix for the two observed blockers. Selection,
+dragging, configuration, right-click, resizing, hover artwork and CCM allocation
+still require the manual build 365 checklist above. Empty-canvas drag selection
+continues to be owned by the Token layer; this patch does not add a second box
+selection workflow. No release is published by this feature branch.
