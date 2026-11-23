@@ -11,7 +11,32 @@ function getterFor(object, key) {
  * Native Tile handlers and renderers must see their genuine layer state.
  */
 export class TileInteraction extends CrossLayerInteraction {
-  constructor(options) {super({...options, layerKey: 'tiles'});}
+  constructor(options) {
+    super({...options, layerKey: 'tiles'});
+    this.debugEnabled = options.debugEnabled ?? (() => false);
+  }
+
+  attach() {
+    super.attach();
+    if (!this.canvas?.stage?.on) return;
+    // Observe only; never stop propagation, dispatch events or alter artwork.
+    const stage = this.canvas.stage;
+    const pointer = event => {
+      if (!this.enabled || !this.debugEnabled()) return;
+      console.debug('Kingdom Death | Tile pointer routing', {
+        target: event.target?.constructor?.name,
+        activeLayer: this.canvas.activeLayer?.constructor?.name,
+        tiles: (this.layer.placeables ?? []).map(tile => ({
+          id: tile.id, visible: tile.visible, renderable: tile.renderable,
+          eventMode: tile.eventMode, interactable: tile.isInteractable,
+          managerState: tile.mouseInteractionManager?.state,
+          ancestors: tileAncestors(tile)
+        }))
+      });
+    };
+    stage.on('pointerdown', pointer);
+    this.restorers.push(() => stage.off('pointerdown', pointer));
+  }
 
   prepare(tile) {
     if (!tile || tile.destroyed || tile.isPreview || this.cards.has(tile)) return;
@@ -58,9 +83,24 @@ export class TileInteraction extends CrossLayerInteraction {
   }
 }
 
+export function tileAncestors(tile) {
+  const result = [];
+  for (let object = tile.parent; object; object = object.parent) {
+    result.push({type: object.constructor?.name, visible: object.visible,
+      renderable: object.renderable, eventMode: object.eventMode,
+      interactiveChildren: object.interactiveChildren});
+  }
+  return result;
+}
+
 export function registerTileIntegration() {
   const adapter = new TileInteraction({getCanvas: () => globalThis.canvas,
+    debugEnabled: () => Boolean(game.settings.get('kingdom-death', 'tileInteractionDebug')),
     available: () => Boolean(game.settings.get('kingdom-death', 'tileTokenInteraction'))});
+  game.settings.register('kingdom-death', 'tileInteractionDebug', {
+    name: 'Debug Tile Pointer Routing', hint: 'Log pointer targets and Tile ancestor interaction state on mouse-down. For troubleshooting only.',
+    scope: 'client', config: true, type: Boolean, default: false
+  });
   game.settings.register('kingdom-death', 'tileTokenInteraction', {
     name: 'Enable Tile Interaction on Token Layer',
     hint: 'Use native Tile controls alongside Tokens and CCM cards. Foundry permissions and tile locks still apply.',

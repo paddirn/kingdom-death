@@ -21,6 +21,8 @@ class TypeDataModel {
           const o = field.options;
           if (o.choices && value === "" && o.blank !== true) throw new Error(`${key}: blank choice requires explicit blank permission`);
           if (o.choices && !o.choices.includes(value)) throw new Error(`${key}: invalid choice`);
+          if (typeof value === "number" && o.max !== undefined && value > o.max) throw new Error(`${key}: above maximum`);
+          if (typeof value === "number" && o.integer && !Number.isInteger(value)) throw new Error(`${key}: not integer`);
           if (typeof value === "number" && (o.min !== undefined && value < o.min)) throw new Error(`${key}: below minimum`);
         }
       }
@@ -655,4 +657,43 @@ test('both portrait headers share control-row alignment and native image actions
   assert.equal(preview,1);assert.equal(picker,1);assert.deepEqual(updated,{img:'new.webp'});
   sheet.isEditable=false;actor.isOwner=false;SettlementSheet.DEFAULT_OPTIONS.actions.portraitChange.call(sheet);assert.equal(picker,1);
   foundry.applications.apps=previous;
+});
+
+test('Injury uses Disorder model, registration, editable fields and native Survivor inventory actions',async()=>{
+  assert.equal(itemModels.injury,itemModels.disorder);
+  assert.equal(new itemModels.injury().validate(),true);
+  const item=new itemModels.injury({notes:'Private injury',source:'Private source',keywords:['injury']});
+  assert.equal(new itemModels.injury(JSON.parse(JSON.stringify(item))).validate(),true);
+  const html=render('item',{item:{name:'Injury',img:'injury.webp'},system:item,editable:true});
+  for(const text of ['Private injury','Private source','data-keyword-entry','injury.webp','Save changes'])assert.ok(html.includes(text));
+  const items=[{id:'i',type:'injury',name:'Injury'},{id:'d',type:'disorder',name:'Disorder'}];
+  const sheet=new SurvivorSheet();sheet.actor={system:new SurvivorData(),items:{contents:items,filter:fn=>items.filter(fn)}};
+  const context=await sheet._prepareContext({});assert.deepEqual(context.injuryItems.map(i=>i.id),['i']);assert.deepEqual(context.disorders.map(i=>i.id),['d']);
+  const survivor=render('survivor',context);assert.match(survivor,/data-kdm-drop="injury"/);assert.match(survivor,/data-action="addItem" data-type="injury"/);
+  const {acceptsItem}=await import('../scripts/ui/item-drops.mjs');
+  assert.equal(acceptsItem({dataset:{kdmDrop:'injury'}},{documentName:'Item',type:'injury'},true),true);
+  assert.equal(acceptsItem({dataset:{kdmDrop:'injury'}},{documentName:'Item',type:'disorder'},true),false);
+});
+test('Resource quantity shares Keywords row, has square stepper marker and survives Item submission',async()=>{
+  const html=render('item',{item:{name:'Resource'},isResource:true,system:{quantity:0},editable:true});
+  assert.match(html,/kdm-keyword-quantity/);assert.match(html,/kdm-square-numbers/);
+  assert.ok(html.indexOf('system.quantity')<html.indexOf('</header>'));
+  assert.equal((html.match(/name="system.quantity"/g)||[]).length,1);
+  const {KDMItemSheet}=await import('../scripts/sheets/item.mjs');const sheet=new KDMItemSheet();
+  sheet.item={type:'resource',system:{keywords:[]}};
+  assert.equal(sheet._processFormData(null,null,{object:{system:{quantity:0}}}).system.quantity,0);
+  const {nextNumber}=await import('../scripts/ui/numbers.mjs');
+  assert.equal(nextNumber(0,-1,{min:0,step:1}),0);
+  assert.equal(nextNumber(0,1,{min:0,step:1}),1);
+  assert.equal(nextNumber(5,1,{min:0,max:5,step:1}),5);
+});
+test('Bleeding schema has safe defaults and bounded integer contract; old valid data remains unchanged',()=>{
+  const field=SurvivorData.defineSchema().bleeding.options;
+  assert.deepEqual([field.initial,field.min,field.max,field.integer],[0,0,5,true]);
+  const data=new SurvivorData();assert.equal(data.validate(),true);assert.equal(data.legacyBleeding,'');
+  for(const value of [-1,6,0.5])assert.throws(()=>new SurvivorData({bleeding:value}).validate());
+  for(let value=0;value<=5;value++)assert.equal(new SurvivorData({bleeding:value}).validate(),true);
+  const old={bleeding:3,notes:'keep',knockedDown:true};assert.deepEqual(SurvivorData.migrateData({...old}),old);
+  const html=render('survivor',{actor:{},system:data,editable:true});
+  assert.match(html,/min="0" max="5" step="1" name="system.bleeding"/);
 });

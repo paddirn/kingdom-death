@@ -1,3 +1,4 @@
+import {validateBleeding} from '../rules/bleeding.mjs';
 import { reconcileArmor } from '../rules/armor.mjs';
 import { validateGrid } from '../rules/gear-grid.mjs';
 const pending=new WeakMap();
@@ -7,10 +8,22 @@ export class KDMActor extends foundry.documents.Actor {
     const task=(pending.get(this) ?? Promise.resolve()).then(()=>super.update(changes,options));
     pending.set(this,task.catch(()=>{}));return task;
   }
+  async _preCreate(data, options, user) {
+    if (await super._preCreate(data,options,user) === false) return false;
+    if (this.type === 'survivor' && this.system.bleeding === 5) this.updateSource({'system.dead':true});
+  }
   async _preUpdate(changes,options,user) {
     if(await super._preUpdate(changes,options,user)===false) return false;
     if(this.type!=='survivor') return;
     const expanded=foundry.utils.expandObject(changes), edits=expanded.system ?? {};
+    if (edits.bleeding !== undefined) {
+      validateBleeding(edits.bleeding);
+      if (edits.bleeding === 5 && this.system.bleeding !== 5) {
+        delete changes['system.dead'];
+        changes.system ??= {};
+        changes.system.dead = true;
+      }
+    }
     const grid={...this.system.gearGrid,...edits.gearGrid};
     if(edits.gearGrid) {
       // Permit clearing legacy dangling references; validate every live assignment and new reference.

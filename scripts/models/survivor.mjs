@@ -1,8 +1,10 @@
+import {migrateBleeding} from '../rules/bleeding.mjs';
 import { severeInjuries, impairments } from "../rules/injury-records.mjs";
 import { clampSurvival, validateSurvival } from "../rules/survival.mjs";
 import { ATTRIBUTES, LOCATIONS, SLOTS } from "../rules/constants.mjs";
 import { fields, common, schema, count, number, bool, slots, text } from "./fields.mjs";
 export class SurvivorData extends foundry.abstract.TypeDataModel {
+  static migrateData(source) {return migrateBleeding(super.migrateData(source));}
   static _cleanData(data, options, state) {
     super._cleanData(data, options, state);
     // Never fill missing keys on a partial update: the merged source is cleaned again.
@@ -34,7 +36,7 @@ export class SurvivorData extends foundry.abstract.TypeDataModel {
       ageMilestones: schema({age1: bool(), age2: bool(), age3: bool(), age4: bool()}),
       weaponProficiency: schema({type: text({blank: true}), value: count(), specialist: bool(), master: bool()}), attributes: schema(Object.fromEntries(Object.keys(ATTRIBUTES).map(key => [key, number(key === "movement" ? 5 : 0)]))),
       survival: schema({value: count(), limit: count(1)}), insanity: count(), brainInjury: bool(),
-      bleeding: count(), huntXP: count(), understanding: count(), courage: count(),
+      bleeding: number(0, {min:0,max:5}), legacyBleeding: text({blank:true}), huntXP: count(), understanding: count(), courage: count(),
       retired: bool(), dead: bool(), knockedDown: bool(),
       locations: schema(Object.fromEntries(Object.keys(LOCATIONS).map(key => [key, schema({armor: count(), ...(key === "head" ? {} : {light: bool()}), heavy: bool()})]))),
       gearGrid: slots(SLOTS)};

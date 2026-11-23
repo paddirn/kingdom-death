@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 const expand=object=>{const result={};for(const [path,value] of Object.entries(object)){let node=result;const keys=path.split('.');for(const key of keys.slice(0,-1)) node=node[key]??={};const key=keys.at(-1);if(value && typeof value==='object' && !Array.isArray(value)) node[key]=merge(node[key]??{},expand(value));else node[key]=value;}return result;};
 function merge(target,source) {for(const [k,v] of Object.entries(source)) {if(v && typeof v==='object' && !Array.isArray(v)) merge(target[k]??={},v);else target[k]=structuredClone(v);}return target;}
 class Actor {
+  async _preCreate() {if(this.cancelPre) return false;}
+  updateSource(changes) {merge(this,expand(changes));}
   async _preUpdate() {if(this.cancelPre) return false;}
   async update(changes,options) {
     changes=structuredClone(changes);
@@ -35,4 +37,26 @@ test('native deletion cleanup and permanent stat edits reconcile current committ
 test('duplicate grid references rejected and legacy independent protection preserved on normal updates',async()=>{
   const a=fixture();a.system.locations.head.armor=7;await a.update({name:'Old survivor'});assert.equal(a.system.locations.head.armor,7);assert.equal(a.system.armorLedger.independent.head,7);
   await assert.rejects(a.update({'system.gearGrid':{slot0:'a',slot1:'a'}}),/two slots/);assert.equal(a.system.locations.head.armor,7);
+});
+
+test('bleeding and death commit atomically for flat and nested updates; reduction never resurrects',async()=>{
+  for (const nested of [false,true]) {
+    const a=fixture();a.system.bleeding=0;a.system.dead=false;
+    await a.update(nested ? {system:{bleeding:5,dead:false}} : {'system.bleeding':5,'system.dead':false});
+    assert.equal(a.system.bleeding,5);assert.equal(a.system.dead,true);assert.equal(a.writes.length,1);
+    await a.update({'system.bleeding':3});assert.equal(a.system.dead,true);
+    await a.update({'system.bleeding':5});await a.update({'system.bleeding':5,'system.dead':false});
+    assert.equal(a.system.dead,false,'explicit manual override when already at five');
+  }
+});
+test('invalid macro bleeding writes reject without changing committed Actor state',async()=>{
+  const a=fixture();a.system.bleeding=2;
+  for(const value of [-1,6,2.5,NaN,Infinity,'5',null]) await assert.rejects(a.update({'system.bleeding':value}),/whole number/);
+  assert.equal(a.system.bleeding,2);assert.equal(a.writes.length,0);
+});
+
+test('new Survivor at five bleeding is dead without a recursive update',async()=>{
+  const a=fixture();a.system.bleeding=5;await a._preCreate({}, {}, {});
+  assert.equal(a.system.dead,true);assert.equal(a.writes.length,0);
+  const b=fixture();b.system.bleeding=5;b.cancelPre=true;assert.equal(await b._preCreate({}, {}, {}),false);assert.equal(b.system.dead,undefined);
 });
