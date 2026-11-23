@@ -37,4 +37,4 @@ export class ProficiencyData extends BasicItemData {
   }
 }
 export const itemModels = {proficiency: ProficiencyData, gear: GearData, armor: ArmorData, resource: ResourceData, fightingArt: BasicItemData,
-  disorder: BasicItemData, ability: BasicItemData, innovation: BasicItemData, settlementLocation: BasicItemData};
+  injury: BasicItemData, disorder: BasicItemData, ability: BasicItemData, innovation: BasicItemData, settlementLocation: BasicItemData};

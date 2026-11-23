@@ -330,3 +330,7 @@
 
 /* Local canvas HUD control; never styles unrelated application buttons. */
 .kdm-movement-toggle.active {background:rgba(140,187,180,.35); border-color:#8cbbb4; color:#d5eee6;}
+
+.kingdom-death .kdm-keyword-quantity {display:flex;gap:1rem;align-items:start;flex-wrap:wrap}
+.kingdom-death .kdm-keyword-quantity > :first-child {flex:1;min-width:12rem}
+.kingdom-death .kdm-keyword-quantity > .kdm-square-numbers {flex:0 0 5rem}

@@ -1,3 +1,4 @@
+import {registerTokenStatus} from './canvas/token-status.mjs';
 import {registerTileIntegration} from './integrations/tiles.mjs';
 import {registerMonsterMovement} from './canvas/monster-movement.mjs';
 import { registerCCMIntegration } from "./integrations/ccm.mjs";
@@ -22,6 +23,7 @@ Hooks.once("init", () => {
   registerCCMIntegration();
   registerTileIntegration();
   registerMonsterMovement();
+  registerTokenStatus();
   CONFIG.Actor.documentClass = KDMActor;
   CONFIG.Item.documentClass = KDMItem;
   Object.assign(CONFIG.Actor.dataModels, {survivor: SurvivorData, monster: MonsterData, settlement: SettlementData});

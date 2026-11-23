@@ -14,7 +14,8 @@
       "innovation": "Innovation",
       "settlementLocation": "Settlement Location",
       "proficiency": "Proficiency",
-      "armor": "Armor"
+      "armor": "Armor",
+      "injury": "Injury"
     }
   }
 }

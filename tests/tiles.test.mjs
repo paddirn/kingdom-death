@@ -82,7 +82,7 @@ test('lifecycle errors restore suspension and preserve subsequent interaction',(
 });
 test('tile client setting does not depend on CCM installation or its setting',()=>{
   let config;const events=[];
-  globalThis.game={settings:{register:(s,k,c)=>{assert.equal(k,'tileTokenInteraction');config=c;},get:(s,k)=>k==='tileTokenInteraction'}};
+  globalThis.game={settings:{register:(s,k,c)=>{if(k==='tileTokenInteraction')config=c;else {assert.equal(k,'tileInteractionDebug');assert.equal(c.default,false);}},get:(s,k)=>k==='tileTokenInteraction'}};
   globalThis.Hooks={on:(name,cb)=>events.push([name,cb])};
   const adapter=registerTileIntegration();assert.equal(adapter.available(),true);assert.equal(config.default,true);assert.equal(config.scope,'client');
   for(const [,cb]of events)cb();adapter.detach();delete globalThis.game;delete globalThis.Hooks;
@@ -139,4 +139,18 @@ test('native visibility changes are neither restored from stale snapshots nor fo
   assert.equal(tile.mesh.visible,false);assert.equal(tile.mesh.alpha,0.2);
   assert.equal(canvas.tiles.objects.visible,false);
   tiles.attach();tiles.detach();assert.equal(tile.mesh.visible,false);
+});
+
+test('Tile diagnostics are opt-in, observation-only and listeners detach on reattachment',()=>{
+  const {canvas,tiles,tile}=fixture();const listeners=new Set();
+  canvas.stage={on:(name,fn)=>listeners.add(fn),off:(name,fn)=>listeners.delete(fn)};
+  let debug=false;tiles.debugEnabled=()=>debug;
+  const original=console.debug, logs=[];console.debug=(...args)=>logs.push(args);
+  try{
+    tiles.attach();assert.equal(listeners.size,1);
+    for(const fn of listeners)fn({target:tile});assert.equal(logs.length,0);
+    debug=true;for(const fn of listeners)fn({target:tile});assert.equal(logs.length,1);
+    tiles.attach();assert.equal(listeners.size,1);assert.equal(canvas.activeLayer,canvas.tokens);
+    tiles.detach();assert.equal(listeners.size,0);
+  }finally{console.debug=original;}
 });
