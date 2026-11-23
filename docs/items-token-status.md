@@ -1,4 +1,4 @@
-# Items and token status (development)
+# Items and token status (v0.1.17)
 
 Resource Quantity shares a row with Keywords and uses the common square numeric
 stepper. Injury is an additional BasicItemData subtype, using the same sheet as
@@ -71,7 +71,7 @@ These rolling V14 docs are not a substitute for build 365 source or runtime.
 
 ## Manual acceptance checklist — pending Foundry 14.365
 
-Use a backed-up test world on Forge. This branch is not a release.
+Use a backed-up test world on Forge before updating a live campaign.
 
 1. Create Resource and Injury world Items; edit keywords, quantity zero and
    positive values, description/source/image. Save, reopen and reload.
@@ -100,5 +100,5 @@ Use a backed-up test world on Forge. This branch is not a release.
 Offline tests cover schema contracts, atomic Actor updates, migrations, Item
 rendering, overlay lifecycle and permission routing with doubles. Actual Foundry
 rendering, mouse interactions, multiplayer synchronization and HUD appearance
-have not been runtime verified. The PR must remain draft until the Tile
-replacement and runtime acceptance are complete.
+have not been runtime verified. PR #18 was merged and v0.1.17 publication was authorized with the Tile
+replacement explicitly unresolved. Publication does not establish runtime acceptance.

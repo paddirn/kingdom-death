@@ -23,7 +23,7 @@ In Foundry Setup → Game Systems → Install System, paste:
 
 `https://github.com/paddirn/kingdom-death/releases/latest/download/system.json`
 
-On Forge, use its custom manifest installation option. The manifest and versioned ZIP are hosted as GitHub release assets. Version 0.1.13 targets **14.365 only**, and remains runtime-unverified. The ZIP import alternative is below.
+On Forge, use its custom manifest installation option. The manifest and versioned ZIP are hosted as GitHub release assets. Version 0.1.17 targets **14.365 only**, and remains runtime-unverified. The ZIP import alternative is below.
 
 ## Install on The Forge (ZIP)
 
@@ -83,11 +83,10 @@ Settlement now includes manual Timeline and Monsters records, Milestones, Princi
 
 Tokens, CCM cards and Tiles have independently configurable cross-layer interaction. Monster token HUDs include **Show Movement Range**, a local full-footprint orthogonal preview with adjustable opacity and an optional configurable shortcut. See [canvas tools](docs/canvas-tools.md) for usage, supported geometry, player-information limits and the Foundry V14 acceptance checklist. These additions have offline regression coverage; actual V14 mouse/visual behavior remains unverified here.
 
-### Development: Items and token status
+### Items and token status (v0.1.17)
 
-The development branch adds Injury Items, Resource Quantity beside Keywords,
+Version 0.1.17 adds Injury Items, Resource Quantity beside Keywords,
 and Survivor/Monster knockdown plus Survivor bleeding token indicators.
 See [state, migration and manual test notes](docs/items-token-status.md).
 The simultaneous Tile replacement remains unresolved; optional **Debug Tile
-Pointer Routing** collects scene diagnostics. This work is not a new release
-and has not been verified in a running Foundry V14.365 world.
+Pointer Routing** collects scene diagnostics. These features have not been verified in a running Foundry V14.365 world.

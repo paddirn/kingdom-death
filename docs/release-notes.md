@@ -1,9 +1,17 @@
-# v0.1.16 — Tile hover rendering fix
+# v0.1.17 — Injury Items and token status indicators
 
-Includes merged PR #17. Separates Tile interaction permission checks from native artwork rendering. Tile hover, previews and renderers now see the real layer state. Removes the Tile adapter's forced visibility, render refresh requests and depth changes. CCM and the shared cross-layer adapter are unchanged.
+Includes merged PR #18.
 
-Validation: 158 JavaScript tests, 9 Python packaging tests, syntax/import/template/manifest checks and ZIP inspection. Regression coverage includes background/foreground/transparent Tile rendering contracts, hover/leave, previews, cleanup and independent CCM behavior.
+- Resource Quantity sits beside Keywords using the square numeric stepper.
+- Injury Items reuse the Disorder model and sheet, with an owned Injury list on Survivors.
+- Knockdown uses the existing Survivor field and a per-token Monster flag, with a native Token HUD toggle and centered prone indicator.
+- Survivor bleeding displays up to five red drops, accepts integers 0–5, and marks Dead atomically when reaching five. Reducing bleeding does not resurrect.
+- Optional client-side Tile pointer diagnostics are off by default. CCM is unchanged.
 
-Actual Foundry V14 build 365 mouse behavior and resolution of the reported disappearance remain unverified in the development environment. See [the Tile hover checklist](https://github.com/paddirn/kingdom-death/blob/v0.1.16/docs/tile-hover-fix.md) for runtime checks. Foundry target remains 14.365.
+**Known limitation:** simultaneous native Tile interaction remains unresolved. This release retains the existing Tile adapter; it does not deliver or claim a replacement routing fix.
 
-Update through Forge, restart the game and fully reload every client to remove the previous version's instance patches. Check Tile hover, selection, dragging, configuration and right-click controls alongside tokens and CCM cards.
+Valid existing bleeding data is preserved. Invalid legacy bleeding is clamped/truncated, with its original value retained in system.legacyBleeding. Invalid values clamped to five mark Dead. Non-numeric legacy values become zero. See [migration details and manual checks](https://github.com/paddirn/kingdom-death/blob/v0.1.17/docs/items-token-status.md).
+
+Validation: 171 JavaScript tests and 9 Python packaging tests, plus syntax, module paths, templates, manifest and ZIP checks. Actual Foundry V14.365 rendering, mouse interactions, HUD behavior and multiplayer acceptance have not been verified. Target remains 14.365.
+
+Back up the world, stop the game, update the system in Forge, restart and fully reload all clients. Test Resource/Injury editing, linked and unlinked Survivor status, per-token Monster knockdown, bleeding/death/Settlement refresh, and existing Armor, movement and CCM behavior before using a live campaign.
