@@ -134,3 +134,14 @@ dragging, configuration, right-click, resizing, hover artwork and CCM allocation
 still require the manual build 365 checklist above. Empty-canvas drag selection
 continues to be owned by the Token layer; this patch does not add a second box
 selection workflow. No release is published by this feature branch.
+
+### Resource header follow-up
+
+Resource Name, Keywords and Quantity are now three direct header columns.
+Quantity uses the same 52px square and two 26px buttons below as Survivor armor.
+The earlier generic square marker did not apply because its CSS was scoped to
+Survivor sheets, and nesting Keywords/Quantity caused wrapping inside one column.
+At very narrow content widths (335px or less), Name spans the first row while
+Keywords and Quantity stay together below. Other Item headers are unchanged.
+The existing quantity binding, permissions and shared numeric event handling
+remain intact. Actual Foundry visual verification is pending.
