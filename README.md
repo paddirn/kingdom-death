@@ -23,7 +23,7 @@ In Foundry Setup → Game Systems → Install System, paste:
 
 `https://github.com/paddirn/kingdom-death/releases/latest/download/system.json`
 
-On Forge, use its custom manifest installation option. The manifest and versioned ZIP are hosted as GitHub release assets. Version 0.1.17 targets **14.365 only**, and remains runtime-unverified. The ZIP import alternative is below.
+On Forge, use its custom manifest installation option. The manifest and versioned ZIP are hosted as GitHub release assets. Version 0.1.18 targets **14.365 only**, and remains runtime-unverified. The ZIP import alternative is below.
 
 ## Install on The Forge (ZIP)
 
@@ -88,5 +88,4 @@ Tokens, CCM cards and Tiles have independently configurable cross-layer interact
 Version 0.1.17 adds Injury Items, Resource Quantity beside Keywords,
 and Survivor/Monster knockdown plus Survivor bleeding token indicators.
 See [state, migration and manual test notes](docs/items-token-status.md).
-The simultaneous Tile replacement remains unresolved; optional **Debug Tile
-Pointer Routing** collects scene diagnostics. These features have not been verified in a running Foundry V14.365 world.
+Version 0.1.18 addresses the observed hidden Tile interaction container and native selection gate, and aligns Resource Name, Keywords and stacked Quantity in one row. Optional **Debug Tile Pointer Routing** collects scene diagnostics. Full Tile interaction and Resource visual acceptance remain pending in Foundry V14.365.

@@ -1,17 +1,16 @@
-# v0.1.17 — Injury Items and token status indicators
+# v0.1.18 — Tile interaction gates and Resource header layout
 
-Includes merged PR #18.
+Includes merged PR #19.
 
-- Resource Quantity sits beside Keywords using the square numeric stepper.
-- Injury Items reuse the Disorder model and sheet, with an owned Injury list on Survivors.
-- Knockdown uses the existing Survivor field and a per-token Monster flag, with a native Token HUD toggle and centered prone indicator.
-- Survivor bleeding displays up to five red drops, accepts integers 0–5, and marks Dead atomically when reaching five. Reducing bleeding does not resurrect.
-- Optional client-side Tile pointer diagnostics are off by default. CCM is unchanged.
+- Addresses two observed Tile interaction blockers in Foundry 14.365: the hidden interaction objects container and native control() rejecting the inactive layer before permission checks.
+- Exposes the interaction container during Token-layer use, with restoration on disable and native layer transitions. Tile artwork remains in its native rendering lifecycle. No layer switching, extra render requests, depth changes, or CCM changes.
+- Keeps native hover and rendering on the genuine layer state, including synchronous callbacks during selection.
+- Resource sheets show Name, Keywords and Quantity in three columns. Quantity uses a 52px square with minus/plus buttons below, matching Survivor armor. Very narrow windows wrap Name above the other two controls.
 
-**Known limitation:** simultaneous native Tile interaction remains unresolved. This release retains the existing Tile adapter; it does not deliver or claim a replacement routing fix.
+Validation: 173 JavaScript tests and 9 Python packaging tests pass, plus syntax, module paths, templates, manifest and ZIP validation. New tests reproduce the hidden interaction container and native control gate, and cover render isolation, exception cleanup and restoration.
 
-Valid existing bleeding data is preserved. Invalid legacy bleeding is clamped/truncated, with its original value retained in system.legacyBleeding. Invalid values clamped to five mark Dead. Non-numeric legacy values become zero. See [migration details and manual checks](https://github.com/paddirn/kingdom-death/blob/v0.1.17/docs/items-token-status.md).
+**Runtime acceptance is still pending.** This is a targeted fix based on the user's installed build 365 source and diagnostics, not a claim of verified native mouse behavior. Test Tile selection, dragging, double-click, right-click and hover alongside tokens and CCM. Empty-canvas drag-box selection remains Token-only. Resource visual alignment also requires runtime confirmation.
 
-Validation: 171 JavaScript tests and 9 Python packaging tests, plus syntax, module paths, templates, manifest and ZIP checks. Actual Foundry V14.365 rendering, mouse interactions, HUD behavior and multiplayer acceptance have not been verified. Target remains 14.365.
+No schema/data migration is introduced in this patch. Foundry target remains 14.365.
 
-Back up the world, stop the game, update the system in Forge, restart and fully reload all clients. Test Resource/Injury editing, linked and unlinked Survivor status, per-token Monster knockdown, bleeding/death/Settlement refresh, and existing Armor, movement and CCM behavior before using a live campaign.
+Back up your world, stop the Forge game, update the system, restart, and fully reload every client to remove the previous instance patches. See [diagnostic evidence and manual checks](https://github.com/paddirn/kingdom-death/blob/v0.1.18/docs/items-token-status.md). If Tile interaction still fails, enable Debug Tile Pointer Routing and capture the output.

@@ -133,7 +133,7 @@ This is a targeted candidate fix for the two observed blockers. Selection,
 dragging, configuration, right-click, resizing, hover artwork and CCM allocation
 still require the manual build 365 checklist above. Empty-canvas drag selection
 continues to be owned by the Token layer; this patch does not add a second box
-selection workflow. No release is published by this feature branch.
+selection workflow. Published in v0.1.18 following the merge of PR #19; runtime acceptance remains pending.
 
 ### Resource header follow-up
 
