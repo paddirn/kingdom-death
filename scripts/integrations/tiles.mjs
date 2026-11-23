@@ -44,10 +44,9 @@ export class TileInteraction extends CrossLayerInteraction {
     if (nativeLayer !== this.layer) return;
     const adapter = this, restorers = [];
     let gateDepth = 0;
-    // The interaction manager asks native permission predicates whether it can
-    // deliver an event. Only those synchronous checks see the layer view.
-    // In particular, _onHoverIn/_onHoverOut, control, clone and render methods
-    // never run under an emulated activation context.
+    // Build 365 also checks layer.active inside control(), before permission
+    // predicates. Scope the view to that synchronous native operation, never
+    // to rendering or its _onControl follow-up. No force/permission bypass.
     const inGate = fn => function(...args) {
       gateDepth++;
       try {return fn.apply(this, args);}
@@ -58,8 +57,20 @@ export class TileInteraction extends CrossLayerInteraction {
     }}));
     const interactable = getterFor(tile, 'isInteractable');
     if (interactable) restorers.push(this.patch(tile, 'isInteractable', {get: inGate(interactable)}));
-    for (const key of ['_canHover','_canControl','_canHUD','_canDrag','_canDragLeftStart','_canConfigure','_canView']) {
+    for (const key of ['control','_canHover','_canControl','_canHUD','_canDrag','_canDragLeftStart','_canConfigure','_canView']) {
       if (typeof tile[key] === 'function') restorers.push(this.patch(tile,key, {value:inGate(tile[key]),writable:true}));
+    }
+    // A control hook can synchronously request a render. Such reentrant calls
+    // must see the genuine layer, just like later render-flag processing.
+    for (const key of ['_onControl','_refreshState','_refreshVisibility','_onHoverIn','_onHoverOut']) {
+      const original = tile[key];
+      if (typeof original !== 'function') continue;
+      restorers.push(this.patch(tile,key,{value:function(...args) {
+        const depth = gateDepth;
+        gateDepth = 0;
+        try {return original.apply(this,args);}
+        finally {gateDepth = depth;}
+      },writable:true}));
     }
     this.cards.set(tile, () => {for (const restore of restorers.reverse()) restore();});
     this.interactive(tile);
@@ -70,9 +81,11 @@ export class TileInteraction extends CrossLayerInteraction {
       if (tile.destroyed) {restore();this.cards.delete(tile);this.display.delete(tile);}
     }
     if (!this.enabled) {this.restoreDisplay();return;}
-    // Do not set visible/renderable/alpha/zIndex or touch the artwork mesh.
+    // Build 365 hides this interaction container on deactivation. Tile meshes
+    // live in PrimaryCanvasGroup, not objects. Expose controls for hit testing
+    // only at lifecycle sync; never change Tile/mesh visibility, alpha or depth.
     this.setDisplay(this.layer,{eventMode:'passive',interactiveChildren:true});
-    this.setDisplay(this.layer.objects,{eventMode:'passive',interactiveChildren:true});
+    this.setDisplay(this.layer.objects,{visible:true,eventMode:'passive',interactiveChildren:true});
     for (const tile of this.layer.placeables ?? []) {this.prepare(tile);this.interactive(tile);}
   }
 

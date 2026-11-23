@@ -6,9 +6,9 @@ import {TileInteraction, registerTileIntegration} from '../scripts/integrations/
 function fixture() {
   const canvas={ready:true,scene:{}};const parent={sortChildren(){this.sorts=(this.sorts??0)+1;}};
   class Layer {
-    constructor(zIndex) {Object.assign(this,{zIndex,parent,active:false,eventMode:'none',interactiveChildren:false,objects:{visible:true,eventMode:'none',interactiveChildren:false},placeables:[],controlled:[]});}
-    activate() {canvas.activeLayer?.deactivate();this.active=true;this.eventMode='passive';canvas.activeLayer=this;return this;}
-    deactivate() {this.active=false;this.eventMode='none';return this;}
+    constructor(zIndex) {Object.assign(this,{zIndex,parent,active:false,eventMode:'none',interactiveChildren:false,objects:{visible:false,eventMode:'none',interactiveChildren:false},placeables:[],controlled:[]});}
+    activate() {canvas.activeLayer?.deactivate();this.active=true;this.objects.visible=true;this.eventMode='passive';canvas.activeLayer=this;return this;}
+    deactivate() {this.active=false;this.objects.visible=false;this.eventMode='none';return this;}
     async draw() {return this;}
     createObject() {const p=new Placeable(this);this.placeables.push(p);return p;}
   }
@@ -19,7 +19,8 @@ function fixture() {
     get isInteractable(){return this.isVisible && this.layer.active;}
     _canControl(){return this.owner && this.isInteractable;}
     _canHover(){return this.isInteractable;}
-    select(){return this._canControl();}
+    control(){if(!this.layer.active)return false;return this._canControl();}
+    select(){return this.control();}
     drag(){return this.select() && !this.document.locked;}
     _onClickLeft2(){return 'configure';}
     _onClickRight(){return 'native-menu';}
@@ -105,7 +106,7 @@ for (const kind of ['background','foreground','transparent']) test(`${kind}: nat
   tile._onHoverOut=function(){this.hover=false;this._refreshState();};
   const originals=Object.fromEntries(['_refreshState','_refreshVisibility','_onHoverIn','_onHoverOut'].map(k=>[k,tile[k]]));
   const mesh={...tile.mesh};
-  canvas.tiles.objects.visible=false; // must not be overridden even for interaction
+  canvas.tiles.objects.visible=false; // build 365 inactive interaction container
   tiles.attach();
   assert.equal(tile.isInteractable,true);assert.equal(tile._canHover(),true);
   for(let i=0;i<3;i++) {
@@ -113,13 +114,14 @@ for (const kind of ['background','foreground','transparent']) test(`${kind}: nat
     tile.select();tile._onHoverOut();tiles.refresh(tile);assert.deepEqual(tile.mesh,mesh);
   }
   assert.ok(observations.every(layer=>layer===canvas.tiles));
-  for(const [key,original]of Object.entries(originals)) assert.equal(tile[key],original);
-  assert.deepEqual(flags,[]);assert.equal(canvas.tiles.objects.visible,false);
+  // Render barriers delegate unchanged behavior with the genuine layer.
+  assert.deepEqual(flags,[]);assert.equal(canvas.tiles.objects.visible,true);
   const preview=canvas.tiles.createObject();preview.isPreview=true;tiles.refresh(preview);
   assert.equal(preview.layer,canvas.tiles);assert.equal(preview.layer.active,false);
   canvas.tiles.activate();tile._onHoverIn();assert.deepEqual(tile.mesh,mesh);
   canvas.tokens.activate();tile._onHoverIn();assert.deepEqual(tile.mesh,mesh);
   tiles.detach();assert.deepEqual(flags,[]);assert.deepEqual(tile.mesh,mesh);
+  for(const [key,original]of Object.entries(originals)) assert.equal(tile[key],original);
   assert.equal(canvas.tiles.objects.visible,false);assert.equal(canvas.tiles.zIndex,500);
   assert.equal(Object.hasOwn(tile,'layer'),false);assert.equal(Object.hasOwn(tile,'isInteractable'),false);
 });
@@ -153,4 +155,36 @@ test('Tile diagnostics are opt-in, observation-only and listeners detach on reat
     tiles.attach();assert.equal(listeners.size,1);assert.equal(canvas.activeLayer,canvas.tokens);
     tiles.detach();assert.equal(listeners.size,0);
   }finally{console.debug=original;}
+});
+
+test('inactive hidden container blocks routing until exposed; native control active gate remains scoped',()=>{
+  const {canvas,tile,tiles}=fixture();const original=tile.control;
+  const dispatch=()=>canvas.tiles.objects.visible && canvas.tiles.objects.interactiveChildren && tile.control();
+  assert.equal(dispatch(),false);
+  const seen=[];
+  tile._refreshState=function(){seen.push(this.layer);};
+  tile._onControl=function(){seen.push(this.layer);this._refreshState();};
+  tile.control=function(){
+    if(!this.layer.active)return false;
+    if(!this._canControl())return false;
+    this._onControl();this._refreshState();return true;
+  };
+  const control=tile.control;
+  tiles.attach();assert.equal(dispatch(),true);
+  assert.ok(seen.every(layer=>layer===canvas.tiles));
+  assert.equal(tile.layer,canvas.tiles);assert.equal(canvas.activeLayer,canvas.tokens);
+  tile.owner=false;assert.equal(dispatch(),false);
+  tiles.detach();assert.equal(canvas.tiles.objects.visible,false);assert.equal(tile.control,control);
+  assert.notEqual(control,original);
+});
+
+test('control failures restore layer context and visibility restores through native layer transitions',()=>{
+  const {canvas,tile,tiles}=fixture();
+  tile.control=function(){assert.equal(this.layer.active,true);throw Error('control failure');};
+  tiles.attach();assert.throws(()=>tile.control(),/control failure/);
+  assert.equal(tile.layer,canvas.tiles);
+  canvas.tiles.activate();tiles.detach();assert.equal(canvas.tiles.objects.visible,true);
+  canvas.tokens.activate();assert.equal(canvas.tiles.objects.visible,false);
+  tiles.attach();assert.equal(canvas.tiles.objects.visible,true);
+  tiles.detach();assert.equal(canvas.tiles.objects.visible,false);
 });
